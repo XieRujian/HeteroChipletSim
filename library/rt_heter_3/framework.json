@@ -1,0 +1,17 @@
+{
+    "topology": "configs/topology/mesh_4.json",
+    "phases": {
+        "rt_en_linear": "configs/phase/rt_en_linear_3.json",
+        "rt_en_qkv": "configs/phase/rt_en_qkv_3.json",
+        "rt_en_self": "configs/phase/rt_en_self_3.json",
+        "rt_en_ffn1": "configs/phase/rt_en_ffn1_3.json",
+        "rt_en_ffn2": "configs/phase/rt_en_ffn2_3.json",
+        "rt_de_qkv": "configs/phase/rt_de_qkv_3.json",
+        "rt_de_self": "configs/phase/rt_de_self_3.json",
+        "rt_de_cross": "configs/phase/rt_de_cross_3.json",
+        "rt_de_ffn1": "configs/phase/rt_de_ffn1_3.json",
+        "rt_de_ffn2": "configs/phase/rt_de_ffn2_3.json",
+        "rt_act_qkv": "configs/phase/rt_act_qkv_3.json"
+    },
+    "arch": "configs/arch/mesh_4_3.ini"
+}

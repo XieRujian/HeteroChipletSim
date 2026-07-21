@@ -1,0 +1,1733 @@
+{
+    "time_slot": [
+        {
+            "type": "Forward",
+            "cycles": 0
+        },
+        {
+            "type": "Forward",
+            "cycles": 0
+        },
+        {
+            "type": "Forward",
+            "cycles": 0
+        },
+        {
+            "type": "Normal",
+            "cycles": 8586
+        },
+        {
+            "type": "Normal",
+            "cycles": 9625
+        },
+        {
+            "type": "Normal",
+            "cycles": 9625
+        },
+        {
+            "type": "Backward",
+            "cycles": 0
+        },
+        {
+            "type": "Backward",
+            "cycles": 0
+        },
+        {
+            "type": "Backward",
+            "cycles": 0
+        },
+        {
+            "type": "Backward",
+            "cycles": 0
+        }
+    ],
+    "schedule_begin": 4,
+    "schedule_end": 6,
+    "data_blocks": {
+        "input_0_0_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_0"
+        },
+        "input_0_0_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_1"
+        },
+        "input_0_0_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_2"
+        },
+        "input_0_0_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_3"
+        },
+        "input_0_0_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_4"
+        },
+        "input_0_0_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_5"
+        },
+        "input_0_1_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_6"
+        },
+        "input_0_1_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_0"
+        },
+        "input_0_1_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_1"
+        },
+        "input_0_1_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_2"
+        },
+        "input_0_1_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_3"
+        },
+        "input_0_1_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_4"
+        },
+        "input_0_2_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_5"
+        },
+        "input_0_2_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_6"
+        },
+        "input_0_2_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_0"
+        },
+        "input_0_2_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_1"
+        },
+        "input_0_2_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_2"
+        },
+        "input_0_2_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_3"
+        },
+        "input_0_3_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_4"
+        },
+        "input_0_3_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_5"
+        },
+        "input_0_3_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_6"
+        },
+        "input_0_3_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_0"
+        },
+        "input_0_3_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_1"
+        },
+        "input_0_3_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_2"
+        },
+        "input_1_0_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_3"
+        },
+        "input_1_0_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_4"
+        },
+        "input_1_0_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_5"
+        },
+        "input_1_0_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_6"
+        },
+        "input_1_0_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_0"
+        },
+        "input_1_0_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_1"
+        },
+        "input_1_1_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_2"
+        },
+        "input_1_1_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_3"
+        },
+        "input_1_1_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_4"
+        },
+        "input_1_1_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_5"
+        },
+        "input_1_1_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_6"
+        },
+        "input_1_1_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_0"
+        },
+        "input_1_2_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_1"
+        },
+        "input_1_2_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_2"
+        },
+        "input_1_2_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_3"
+        },
+        "input_1_2_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_4"
+        },
+        "input_1_2_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_5"
+        },
+        "input_1_2_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_6"
+        },
+        "input_1_3_0": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_0"
+        },
+        "input_1_3_1": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_1"
+        },
+        "input_1_3_2": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_2"
+        },
+        "input_1_3_3": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_3"
+        },
+        "input_1_3_4": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_4"
+        },
+        "input_1_3_5": {
+            "shape": [
+                32,
+                16,
+                16
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "pim_5"
+        },
+        "weight_0_0": {
+            "shape": [
+                3,
+                3,
+                16,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "Storage"
+        },
+        "weight_1_0": {
+            "shape": [
+                3,
+                3,
+                16,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "Storage"
+        },
+        "weight_2_0": {
+            "shape": [
+                3,
+                3,
+                16,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "Storage"
+        },
+        "weight_3_0": {
+            "shape": [
+                3,
+                3,
+                16,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "Storage"
+        },
+        "weight_4_0": {
+            "shape": [
+                3,
+                3,
+                16,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "Storage"
+        },
+        "weight_5_0": {
+            "shape": [
+                3,
+                3,
+                16,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Input",
+            "source": "Storage"
+        },
+        "output_0_0_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_0"
+        },
+        "output_0_1_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_1"
+        },
+        "output_0_2_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_2"
+        },
+        "output_0_3_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_3"
+        },
+        "output_1_0_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_4"
+        },
+        "output_1_1_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_5"
+        },
+        "output_1_2_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_6"
+        },
+        "output_1_3_0": {
+            "shape": [
+                16,
+                8,
+                192
+            ],
+            "dtype": "int8",
+            "tag": "Output",
+            "destination": "pim_0"
+        }
+    },
+    "tasks": {
+        "conv_0_0_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_0_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_0_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_0_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_0_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_0_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_0_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_0_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_0_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_0_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_0_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_0_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_0_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_0_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_0_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_0_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_0_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_0_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_1_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_1_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_0_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_1_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_1_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_0_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_1_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_1_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_0_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_1_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_1_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_0_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_1_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_1_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_0_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_1_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_1_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_0_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_2_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_2_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_0_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_2_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_2_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_0_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_2_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_2_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_0_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_2_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_2_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_0_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_2_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_2_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_0_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_2_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_2_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_0_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_3_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_3_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_0_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_3_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_3_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_0_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_3_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_3_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_0_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_3_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_3_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_0_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_3_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_3_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_0_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_0_3_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_0_3_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_0_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_0_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_0_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_1_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_0_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_0_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_1_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_0_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_0_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_1_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_0_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_0_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_1_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_0_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_0_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_1_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_0_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_0_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_1_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_1_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_1_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_1_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_1_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_1_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_1_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_1_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_1_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_1_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_1_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_1_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_1_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_1_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_1_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_1_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_1_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_1_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_1_1_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_2_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_2_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_1_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_2_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_2_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_1_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_2_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_2_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_1_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_2_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_2_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_1_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_2_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_2_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_1_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_2_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_2_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_1_2_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_3_0_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_3_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_1_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_3_1_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_3_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_1_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_3_2_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_3_2",
+                "weight_2_0"
+            ],
+            "outputs": [
+                "output_1_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_3_3_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_3_3",
+                "weight_3_0"
+            ],
+            "outputs": [
+                "output_1_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_3_4_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_3_4",
+                "weight_4_0"
+            ],
+            "outputs": [
+                "output_1_3_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "conv_1_3_5_0": {
+            "type": "Conv",
+            "batch_size": 1,
+            "in_channels": 16,
+            "out_channels": 192,
+            "in_width": 32,
+            "in_height": 16,
+            "kernel_width": 3,
+            "kernel_height": 3,
+            "stride_width": 2,
+            "stride_height": 2,
+            "padding_width": 1,
+            "padding_height": 1,
+            "inputs": [
+                "input_1_3_5",
+                "weight_5_0"
+            ],
+            "outputs": [
+                "output_1_3_0"
+            ],
+            "shared_memory_byte": 0
+        }
+    },
+    "compute_omega": 100
+}

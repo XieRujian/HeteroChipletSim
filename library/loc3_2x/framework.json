@@ -1,0 +1,41 @@
+{
+    "topology": "configs/topology/oc_mesh_4_2x.json",
+    "phases": {
+        "oc_vit_1":
+        {
+            "dataflow_schedule_time_limit": 180,
+            "repetition": 1,
+            "config": "configs/phase/oc_vit_1_4.json"
+        },
+        "oc_vit_2": {
+            "dataflow_schedule_time_limit": 180,
+            "repetition": 1,
+            "config": "configs/phase/oc_vit_2_4.json"
+        },
+        "oc_vit_3": {
+            "dataflow_schedule_time_limit": 180,
+            "repetition": 1,
+            "config": "configs/phase/oc_vit_3_4.json"
+        },
+        "oc_vit_4": {
+            "dataflow_schedule_time_limit": 180,
+            "repetition": 1,
+            "config": "configs/phase/oc_vit_4_4.json"
+        },
+        "oc_gemm": {
+            "dataflow_schedule_time_limit": 300,
+            "repetition": 264,
+            "config": "configs/phase/oc_gemm_4.json"
+        },
+        "oc_attention": {
+            "dataflow_schedule_time_limit": 300,
+            "repetition": 24,
+            "config": "configs/phase/oc_attention_4.json"
+        }
+    },
+    "arch": "configs/arch/mesh_4_4_loc3.ini",
+    "extra_tick": 45640,
+    "extra_compute_energy": 76142332,
+    "extra_noc_energy": 0,
+    "extra_dram_energy": 0
+}

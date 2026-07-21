@@ -1,0 +1,18 @@
+Total Time: 18852
+Total NOC Energy: 4.17692e+07
+Total DRAM Energy: 3.98131e+07
+Total Bytes: 1089792
+Total Hops Bytes: 5469984
+Bytes with 0 hops: 0
+Bytes with 1 hops: 16608
+Bytes with 2 hops: 207744
+Bytes with 3 hops: 226176
+Bytes with 4 hops: 105120
+Bytes with 5 hops: 104928
+Bytes with 6 hops: 86688
+Bytes with 7 hops: 164160
+Bytes with 8 hops: 42240
+Bytes with 9 hops: 36864
+Bytes with 10 hops: 33024
+Bytes with 11 hops: 49824
+Bytes with 12 hops: 16416

@@ -1,0 +1,5 @@
+Total Time: 17172
+Total NOC Energy: 1.87433e+07
+Total DRAM Energy: 1.06168e+08
+Total Bytes: 958464
+Total Hops Bytes: 3006464

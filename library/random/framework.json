@@ -1,0 +1,11 @@
+{
+    "topology": "configs/topology/oc_mesh_4.json",
+    "phases": {
+        "oc_gemm": {
+            "dataflow_schedule_time_limit": 300,
+            "repetition": 264,
+            "config": "configs/phase/oc_gemm_4.json"
+        }
+    },
+    "arch": "configs/arch/mesh_4_4.ini"
+}

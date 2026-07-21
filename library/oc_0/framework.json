@@ -1,0 +1,26 @@
+{
+    "topology": "configs/topology/oc_mesh_4.json",
+    "phases": {
+        "oc_vit":
+        {
+            "dataflow_schedule_time_limit": 300,
+            "repetition": 1,
+            "config": "configs/phase/oc_vit_0.json"
+        },
+        "oc_gemm": {
+            "dataflow_schedule_time_limit": 300,
+            "repetition": 264,
+            "config": "configs/phase/oc_gemm_0.json"
+        },
+        "oc_attention": {
+            "dataflow_schedule_time_limit": 300,
+            "repetition": 24,
+            "config": "configs/phase/oc_attention_0.json"
+        }
+    },
+    "arch": "configs/arch/mesh_4_0.ini",
+    "extra_tick": 575360,
+    "extra_compute_energy": 156977056,
+    "extra_noc_energy": 0,
+    "extra_dram_energy": 5734400000
+}

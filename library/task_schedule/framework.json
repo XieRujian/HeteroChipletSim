@@ -1,0 +1,11 @@
+{
+    "topology": "configs/topology/mesh_4.json",
+    "phases": {
+        "gemm": "configs/phase/gemm.json",
+        "gemv1": "configs/phase/gemv_1.json",
+        "gemv2": "configs/phase/gemv_2.json",
+        "gemv3": "configs/phase/gemv_3.json",
+        "gemv4": "configs/phase/gemv_4.json"
+    },
+    "arch": "configs/arch/mesh_4_homo.ini"
+}
