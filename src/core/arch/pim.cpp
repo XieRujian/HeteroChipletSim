@@ -1,17 +1,16 @@
 #include <cmath>
 
 #include "../task/tasks.h"
-#include "archs.h"
 #include "pim.h"
 
 namespace core
 {
-    PIM::PIM(const std::map<std::string, std::string> &config_ini) : ArchImpl(config_ini),
+    PIM::PIM(const std::map<std::string, std::string> &config_ini) : ArchImpl(ArchType::PIM, config_ini),
                                                                      bank_num_(std::stoull(config_ini.at("bank_num"))),
                                                                      rows_per_subarray_(std::stoull(config_ini.at("rows_per_subarray"))),
                                                                      bit_per_row_(std::stoull(config_ini.at("bit_per_row"))),
                                                                      mac_per_bank_(std::stoull(config_ini.at("mac_per_bank"))),
-                                                                     global_bandwidth_bytes_per_cycle_(std::stoull(config_ini.at("global_bandwidth_bytes_per_cycle"))),
+                                                                     global_bandwidth_bytes_per_tick_(std::stoull(config_ini.at("global_bandwidth_bytes_per_tick"))),
                                                                      local_rf_depth_(std::stoull(config_ini.at("local_rf_depth"))),
                                                                      frequency_ghz_(std::stod(config_ini.at("frequency_ghz"))) {}
 
@@ -25,7 +24,7 @@ namespace core
         uint64_t n_per_bank = util::ceil(n, bank_num_);
         auto tile_compute_cycle = [&](uint64_t m, uint64_t n, uint64_t k)
         {
-            Cycle access_cycle = util::ceil((m * k + m * n) * dt_bytes, global_bandwidth_bytes_per_cycle_);
+            Cycle access_cycle = util::ceil((m * k + m * n) * dt_bytes, global_bandwidth_bytes_per_tick_);
             Cycle compute_cycle = m * k * n / mac_per_bank_;
             return std::max(access_cycle, compute_cycle);
         };
@@ -101,8 +100,8 @@ namespace core
             uint64_t n = attention.kv_size;
             uint64_t k = attention.head_dim;
 
-            Tick tick = EvaluateGemmTick(m, n, k, 1);
-            Energy energy = EvaluateGemmDynamicEnergy(m, n, k, 1);
+            Tick tick = attention.head_num * EvaluateGemmTick(m, n, k, 1);
+            Energy energy = attention.head_num * EvaluateGemmDynamicEnergy(m, n, k, 1);
             execution_ticks += tick;
             dynamic_energy_pj += energy;
         }
@@ -111,8 +110,8 @@ namespace core
             uint64_t n = attention.head_dim;
             uint64_t k = attention.kv_size;
 
-            Tick tick = EvaluateGemmTick(m, n, k, 1);
-            Energy energy = EvaluateGemmDynamicEnergy(m, n, k, 1);
+            Tick tick = attention.head_num * EvaluateGemmTick(m, n, k, 1);
+            Energy energy = attention.head_num * EvaluateGemmDynamicEnergy(m, n, k, 1);
             execution_ticks += tick;
             dynamic_energy_pj += energy;
         }

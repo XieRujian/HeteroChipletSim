@@ -18,7 +18,7 @@ namespace math
     class Constraint;
     class ILPSolver;
 
-    enum VariableType
+    enum class VariableType
     {
         Binary,
         Integer,
@@ -97,7 +97,7 @@ namespace math
     class Constraint
     {
     public:
-        enum ConstraintSense
+        enum class ConstraintSense
         {
             Equal,
             LessEqual,
@@ -115,7 +115,7 @@ namespace math
         friend class ILPSolver;
 
     public:
-        Constraint() : solver_ptr_(nullptr), sense_(Equal), rhs_(0.0) {}
+        Constraint() : solver_ptr_(nullptr), sense_(ConstraintSense::Equal), rhs_(0.0) {}
         Constraint(const Variable &var, ConstraintSense sense, double rhs = 0) : solver_ptr_(var.solver_ptr_), coeff_({{var.id_, 1.0}}), sense_(sense), rhs_(rhs) {}
         Constraint(const LinearExpression &expr, ConstraintSense sense, double rhs = 0) : solver_ptr_(expr.solver_ptr_), coeff_(expr.coeff_), sense_(sense), rhs_(rhs - expr.constant_) {}
     };
@@ -123,14 +123,14 @@ namespace math
     class ILPSolver
     {
     public:
-        enum SolverChoice
+        enum class SolverChoice
         {
             Gurobi,
             // CPLEX,
             // CBC
         };
 
-        enum ObjectiveSense
+        enum class ObjectiveSense
         {
             Minimize,
             Maximize
@@ -166,15 +166,15 @@ namespace math
         void solve_gurobi(Second time_limit);
 
     public:
-        ILPSolver() : var_count_(0), solver_choice_(Gurobi) {}
+        ILPSolver() : var_count_(0), solver_choice_(SolverChoice::Gurobi) {}
         ~ILPSolver() {}
 
         size_t GetConstraintCount() const noexcept { return constraints_.size(); }
         double GetObjectiveValue() const noexcept { return objective_value_; }
 
-        void CreateVariable(const std::string &name, VariableType type = Continuous, double lb = -INFINITY, double ub = INFINITY);
+        void CreateVariable(const std::string &name, VariableType type = VariableType::Continuous, double lb = -INFINITY, double ub = INFINITY);
         void AddConstraint(const Constraint &constraint) { constraints_.push_back(constraint); }
-        void SetObjective(const LinearExpression &objective, ObjectiveSense sense = Minimize) { objective_ = objective, objective_sense_ = sense; }
+        void SetObjective(const LinearExpression &objective, ObjectiveSense sense = ObjectiveSense::Minimize) { objective_ = objective, objective_sense_ = sense; }
 
         void SetIntermediateResultPath(const std::string &path) { intermediate_result_path_ = path; }
         void Solve(Second time_limit = 21600);

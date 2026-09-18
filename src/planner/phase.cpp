@@ -29,34 +29,12 @@ namespace planner
                     core::DataBlock data_block(data_block_parse);
                     data_blocks_.emplace(data_block.GetName(), data_block);
                 }
-            else if (key == "time_slot")
-                for (cJSON *time_slot_parse = item->child; time_slot_parse; time_slot_parse = time_slot_parse->next)
-                {
-                    TimeSlotType time_slot_type = TimeSlotType::Normal;
-                    Tick tick = 0;
-                    for (cJSON *item_parse = time_slot_parse->child; item_parse; item_parse = item_parse->next)
-                    {
-                        std::string item_key(item_parse->string);
-                        if (item_key == "type")
-                        {
-                            if (std::string(item_parse->valuestring) == "Normal")
-                                time_slot_type = TimeSlotType::Normal;
-                            else if (std::string(item_parse->valuestring) == "Forward")
-                                time_slot_type = TimeSlotType::Forward;
-                            else if (std::string(item_parse->valuestring) == "Backward")
-                                time_slot_type = TimeSlotType::Backward;
-                            else
-                                throw std::runtime_error("Invalid time slot type: " + std::string(item_parse->valuestring));
-                        }
-                        else if (item_key == "cycles")
-                            tick = item_parse->valueint;
-                    }
-                    time_slot_.emplace_back(time_slot_type, tick);
-                }
-            else if (key == "schedule_begin")
-                schedule_begin_time_ = item->valueint;
-            else if (key == "schedule_end")
-                schedule_end_time_ = item->valueint;
+            else if (key == "prefix_transmission_time")
+                prefix_transmission_time_ = item->valueint;
+            else if (key == "suffix_transmission_time")
+                suffix_transmission_time_ = item->valueint;
+            else if (key == "base_time_slot_ticks")
+                base_time_slot_ticks_ = item->valueint;
             else if (key == "compute_omega")
                 compute_omega_ = item->valuedouble;
             else if (key == "buffer_omega")
@@ -67,8 +45,9 @@ namespace planner
                 temporal_omega = item->valuedouble;
             else if (key == "dependency_omega")
                 dependency_omega = item->valuedouble;
+            else if (key == "data_distributor")
+                data_distributor_ = std::shared_ptr<DataDistributor>(CreateDataDistributor(item));
         }
-        num_time_steps_ = time_slot_.size();
 
         DataBlockId data_block_id = 0;
         for (auto &[name, data_block] : data_blocks_)
@@ -77,6 +56,53 @@ namespace planner
             if (!data_block.GetSource().empty())
                 GetNetwork().GetArch(GetNetwork().GetNodeIdByArch(data_block.GetSource()))->AddPreStoreDataBlock(name);
         }
+
+        CalculateMinimalComputeTime();
+    }
+
+    void Phase::CalculateMinimalComputeTime()
+    {
+        std::vector<Tick> node_compute_time(GetNetwork().GetNumNodes(), 0);
+        Tick max_node_compute_time = 0;
+        compute_ticks_.clear();
+        for (const auto &[name, task] : tasks_)
+        {
+            NodeId min_node = -1;
+            Tick min_node_end_time = std::numeric_limits<Tick>::max();
+            for (NodeId node = 0; node < GetNetwork().GetNumNodes(); node++)
+            {
+                auto task_overhead = GetArch(task.GetScheduledNode()).Evaluate(task);
+                if (node_compute_time[node] + task_overhead.execution_ticks < min_node_end_time)
+                {
+                    min_node_end_time = node_compute_time[node] + task_overhead.execution_ticks;
+                    min_node = node;
+                }
+            }
+
+            if (min_node_end_time > base_time_slot_ticks_)
+            {
+                compute_ticks_.push_back(max_node_compute_time);
+                node_compute_time.assign(GetNetwork().GetNumNodes(), 0);
+                for (NodeId node = 0; node < GetNetwork().GetNumNodes(); node++)
+                {
+                    auto task_overhead = GetArch(task.GetScheduledNode()).Evaluate(task);
+                    if (task_overhead.execution_ticks < min_node_end_time)
+                    {
+                        min_node_end_time = task_overhead.execution_ticks;
+                        min_node = node;
+                    }
+                }
+                node_compute_time[min_node] = min_node_end_time;
+                max_node_compute_time = min_node_end_time;
+            }
+            else
+            {
+                node_compute_time[min_node] = min_node_end_time;
+                max_node_compute_time = std::max(max_node_compute_time, min_node_end_time);
+            }
+        }
+
+        compute_ticks_.push_back(max_node_compute_time);
     }
 
     void Phase::CancelTaskSchedule(TaskName task_name)
@@ -96,7 +122,7 @@ namespace planner
 
     bool Phase::ScheduleTask(TimeStamp time, NodeId node, const TaskName &task_name)
     {
-        if (time < schedule_begin_time_ || time > schedule_end_time_)
+        if (time < 0 || time >= (TimeStamp)compute_ticks_.size())
             return false;
         if (node < 0 || node >= GetNetwork().GetNumNodes())
             return false;
@@ -113,7 +139,7 @@ namespace planner
 
         auto task_overhead = GetArch(node).Evaluate(task);
         Tick &node_overhead = used_compute_ticks_[{time, node}];
-        if (node_overhead + task_overhead.execution_ticks > time_slot_[time].second)
+        if (node_overhead + task_overhead.execution_ticks > base_time_slot_ticks_)
             return false;
         node_overhead += task_overhead.execution_ticks;
 
@@ -134,7 +160,7 @@ namespace planner
 
     std::tuple<Tick, Energy, Energy> Phase::EstimateDataflowOverhead(DataflowScheduler::OverheadEstimateType type, Second time_limit)
     {
-        dataflow_scheduler_ = std::make_shared<DataflowScheduler>(time_slot_, schedule_begin_time_, schedule_end_time_, GetNetwork(), GetDataBlocks(), GetTasks());
+        dataflow_scheduler_ = std::make_shared<DataflowScheduler>(compute_ticks_, prefix_transmission_time_, suffix_transmission_time_, GetNetwork(), GetDataBlocks(), GetTasks());
         util::MakeDirectory(framework_ptr_->GetRootPath() + "/ilp_intermediate_result/");
         util::MakeDirectory(framework_ptr_->GetRootPath() + "/data_analysis/");
         dataflow_scheduler_->SetIntermediateResultPath(framework_ptr_->GetRootPath() + "/ilp_intermediate_result/" + phase_name_ + ".txt");
@@ -144,7 +170,7 @@ namespace planner
 
     void Phase::ScheduleTaskAllocation()
     {
-        task_scheduler_ = std::make_shared<TaskScheduler>(time_slot_, schedule_begin_time_, schedule_end_time_, GetNetwork(), data_blocks_, GetTasks(), compute_omega_, buffer_omega_, spatial_omega, temporal_omega, dependency_omega);
+        task_scheduler_ = std::make_shared<TaskScheduler>(compute_ticks_, base_time_slot_ticks_, suffix_transmission_time_, GetNetwork(), data_blocks_, GetTasks(), compute_omega_, buffer_omega_, spatial_omega, temporal_omega, dependency_omega);
         util::MakeDirectory(framework_ptr_->GetRootPath() + "/search_results/");
         task_scheduler_->SetSearchResultPath(framework_ptr_->GetRootPath() + "/search_results/" + phase_name_ + ".ini");
         task_scheduler_->SearchForTaskAllocation();

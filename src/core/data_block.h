@@ -12,12 +12,12 @@ namespace core
     class DataBlock
     {
     public:
-        enum DataTag
+        enum class DataTag
         {
             Input, // 输入数据
             Output // 输出数据
         };
-        enum DataType
+        enum class DataType
         {
             INT8,
             FP16,
@@ -42,6 +42,8 @@ namespace core
         DataType GetDataType() const noexcept { return dtype_; }
         const ArchName &GetDestination() const noexcept { return destination_; }
         const ArchName &GetSource() const noexcept { return source_; }
+        void SetSource(const ArchName &source) { source_ = source; }
+        void SetDestination(const ArchName &destination) { destination_ = destination; }
         Size GetSize() const;
 
         void SetId(DataBlockId id) noexcept { id_ = id; }

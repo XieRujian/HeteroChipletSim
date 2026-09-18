@@ -3,13 +3,12 @@
 #include "util/common.h"
 
 #include "../task/tasks.h"
-#include "archs.h"
 #include "systolic_array.h"
 
 namespace core
 {
     SystolicArray::SystolicArray(const std::map<std::string, std::string> &config_ini)
-        : ArchImpl(config_ini),
+        : ArchImpl(ArchType::SA, config_ini),
           row_(std::stoull(config_ini.at("row"))),
           col_(std::stoull(config_ini.at("col"))),
           num_array_(std::stoull(config_ini.at("num_array"))),
@@ -80,8 +79,8 @@ namespace core
             uint64_t n = attention.kv_size;
             uint64_t k = attention.head_dim;
 
-            Tick tick = EvaluateGemmTick(m, n, k);
-            Energy energy = EvaluateGemmDynamicEnergy(m, n, k, 1);
+            Tick tick = attention.head_num * EvaluateGemmTick(m, n, k);
+            Energy energy = attention.head_num * EvaluateGemmDynamicEnergy(m, n, k, 1);
             execution_ticks += tick;
             dynamic_energy_pj += energy;
         }
@@ -90,8 +89,8 @@ namespace core
             uint64_t n = attention.head_dim;
             uint64_t k = attention.kv_size;
 
-            Tick tick = EvaluateGemmTick(m, n, k);
-            Energy energy = EvaluateGemmDynamicEnergy(m, n, k, 1);
+            Tick tick = attention.head_num * EvaluateGemmTick(m, n, k);
+            Energy energy = attention.head_num * EvaluateGemmDynamicEnergy(m, n, k, 1);
             execution_ticks += tick;
             dynamic_energy_pj += energy;
         }

@@ -94,13 +94,13 @@ namespace math
                 lhs += coeff * vars[var_id];
             switch (constraint.sense_)
             {
-            case Constraint::Equal:
+            case Constraint::ConstraintSense::Equal:
                 model.addConstr(lhs == constraint.rhs_);
                 break;
-            case Constraint::LessEqual:
+            case Constraint::ConstraintSense::LessEqual:
                 model.addConstr(lhs <= constraint.rhs_);
                 break;
-            case Constraint::GreaterEqual:
+            case Constraint::ConstraintSense::GreaterEqual:
                 model.addConstr(lhs >= constraint.rhs_);
                 break;
             }
@@ -108,10 +108,10 @@ namespace math
 
         switch (objective_sense_)
         {
-        case Minimize:
+        case ILPSolver::ObjectiveSense::Minimize:
             model.set(GRB_IntAttr_ModelSense, GRB_MINIMIZE);
             break;
-        case Maximize:
+        case ILPSolver::ObjectiveSense::Maximize:
             model.set(GRB_IntAttr_ModelSense, GRB_MAXIMIZE);
             break;
         default:

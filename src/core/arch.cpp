@@ -10,8 +10,8 @@
 
 namespace core
 {
-    ArchImpl::ArchImpl(const std::map<std::string, std::string> &config_ini)
-        : buffer_capacity_kb_(std::stoull(config_ini.at("buffer_size"))) {}
+    ArchImpl::ArchImpl(ArchType type, const std::map<std::string, std::string> &config_ini)
+        : type_(type), buffer_capacity_kb_(std::stoull(config_ini.at("buffer_size"))) {}
 
     void ArchImpl::AddPreStoreDataBlock(const DataBlockName &data_block_name)
     {

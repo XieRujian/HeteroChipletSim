@@ -17,10 +17,9 @@ namespace planner
 {
     class TaskScheduler
     {
-        TimeStamp num_time_steps_;
-        std::vector<std::pair<TimeSlotType, Tick>> time_slot_;
-        TimeStamp schedule_begin_time_;
-        TimeStamp schedule_end_time_;
+        TimeStamp prefix_transmission_time_;
+        TimeStamp suffix_transmission_time_;
+        std::vector<Tick> compute_ticks_;
         core::Network network_;
         std::map<DataBlockName, core::DataBlock> data_blocks_;
         std::map<TaskName, core::Task> tasks_;
@@ -28,8 +27,9 @@ namespace planner
         std::shared_ptr<DataflowScheduler> dataflow_scheduler_;
 
     public:
-        TaskScheduler(const std::vector<std::pair<TimeSlotType, Tick>> &time_slot,
-                      TimeStamp schedule_begin_time, TimeStamp schedule_end_time,
+        TaskScheduler(const std::vector<Tick> &compute_ticks,
+                      TimeStamp prefix_transmission_time,
+                      TimeStamp suffix_transmission_time,
                       const core::Network &network,
                       const std::map<DataBlockName, core::DataBlock> &data_blocks,
                       const std::map<TaskName, core::Task> &tasks,

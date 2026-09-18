@@ -63,7 +63,8 @@ namespace planner
         Energy total_dram_energy = 0;
         for (auto &phase_config : phase_configs_)
         {
-            auto [time, noc_energy, dram_energy] = phase_config.phase.EstimateDataflowOverhead(DataflowScheduler::Strict, phase_config.dataflow_schedule_time_limit);
+            // Estimate the dataflow overhead for each phase
+            auto [time, noc_energy, dram_energy] = phase_config.phase.EstimateDataflowOverhead(DataflowScheduler::OverheadEstimateType::Strict, phase_config.dataflow_schedule_time_limit);
             total_time += time * phase_config.repetition;
             total_noc_energy += noc_energy * phase_config.repetition;
             total_dram_energy += dram_energy * phase_config.repetition;

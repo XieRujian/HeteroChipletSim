@@ -12,8 +12,8 @@
 
 namespace planner
 {
-    DataflowScheduler::DataflowScheduler(const std::vector<std::pair<TimeSlotType, Tick>> &time_slot, Tick schedule_begin_time, Tick schedule_end_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks)
-        : num_time_steps_(time_slot.size()), time_slot_(time_slot), schedule_begin_time_(schedule_begin_time), schedule_end_time_(schedule_end_time), network_(network), data_blocks_(data_blocks)
+    DataflowScheduler::DataflowScheduler(std::vector<Tick> compute_ticks, Tick prefix_transmission_time, Tick suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks)
+        : compute_ticks_(compute_ticks), prefix_transmission_time_(prefix_transmission_time), suffix_transmission_time_(suffix_transmission_time), network_(network), data_blocks_(data_blocks)
     {
         for (const auto &[name, task] : tasks)
             tasks_.push_back(task);
@@ -39,6 +39,7 @@ namespace planner
 
         DataBlockId data_block_num = data_blocks_.size();
         NodeId node_num = network_.GetNumNodes();
+        TimeStamp total_time = prefix_transmission_time_ + compute_ticks_.size() + suffix_transmission_time_;
 
         // ===== 初始化：已知的初始可达性 =====
         for (auto &[_, data_block] : data_blocks_)
@@ -53,8 +54,8 @@ namespace planner
             if (!data_block.GetDestination().empty())
             {
                 NodeId node = network_.GetNodeIdByArch(data_block.GetDestination());
-                can_reach_set.insert({num_time_steps_ - 1, node, d});
-                consume_set[d].insert({num_time_steps_ - 1, node});
+                can_reach_set.insert({total_time - 1, node, d});
+                consume_set[d].insert({total_time - 1, node});
             }
         }
 
@@ -85,7 +86,7 @@ namespace planner
         }
 
         // ===== 前向传播：计算能到达的位置 =====
-        for (TimeStamp t = 1; t < num_time_steps_; t++)
+        for (TimeStamp t = 1; t < total_time; t++)
         {
             // 数据可以沿着边流动
             for (const core::Chain &chain : network_.GetChains())
@@ -102,7 +103,7 @@ namespace planner
         }
 
         // ===== 反向传播：计算能被用上的数据 =====
-        for (TimeStamp t = num_time_steps_; --t;)
+        for (TimeStamp t = total_time; --t;)
         {
             // 反向沿着边传播
             for (const core::Chain &chain : network_.GetChains())
@@ -130,6 +131,7 @@ namespace planner
 
         NodeId node_num = network_.GetNumNodes();
         DataBlockId data_block_num = data_blocks_.size();
+        TimeStamp total_time = prefix_transmission_time_ + compute_ticks_.size() + suffix_transmission_time_;
 
         auto [shared_memory_byte, produce_set, consume_set, reachable_set, can_reach_set] = BuildReachabilitySets();
 
@@ -145,13 +147,13 @@ namespace planner
 
         std::set<std::tuple<TimeStamp, NodeId, DataBlockId>> buffer_enable_set;
         std::set<std::tuple<TimeStamp, ChainId, DataBlockId>> flow_enable_set;
-        for (TimeStamp t = 0; t < num_time_steps_; t++)
+        for (TimeStamp t = 0; t < total_time; t++)
             for (NodeId n = 0; n < node_num; n++)
                 for (DataBlockId d = 0; d < data_block_num; d++)
                     if (reachable_set.count({t, n, d}) && can_reach_set.count({t, n, d}))
                         buffer_enable_set.insert({t, n, d});
 
-        for (TimeStamp t = 0; t < num_time_steps_ - 1; t++)
+        for (TimeStamp t = 0; t < total_time - 1; t++)
             for (ChainId c = 0; c < network_.GetNumChains(); c++)
             {
                 NodeId from_node = network_.GetChains()[c].from_node;
@@ -177,7 +179,7 @@ namespace planner
             if (!data_block.GetDestination().empty())
             { // 添加最终数据存在的约束
                 NodeId node = network_.GetNodeIdByArch(data_block.GetDestination());
-                solver_.AddConstraint(buffer(num_time_steps_ - 1, node, data_block.GetId()) == 1);
+                solver_.AddConstraint(buffer(total_time - 1, node, data_block.GetId()) == 1);
             }
         }
 
@@ -190,17 +192,17 @@ namespace planner
             DataBlockId d = data_block.GetId();
             switch (data_block.GetDataTag())
             {
-            case core::DataBlock::Input:
+            case core::DataBlock::DataTag::Input:
                 // 对于输入数据，流出时同一时刻必须存储于起点
-                for (TimeStamp t = 0; t + 1 < num_time_steps_; t++)
+                for (TimeStamp t = 0; t + 1 < total_time; t++)
                     for (ChainId c = 0; c < network_.GetNumChains(); c++)
                         if (flow_enable_set.count({t, c, d}))
                             solver_.AddConstraint(buffer(t, network_.GetChains()[c].from_node, d) >=
                                                   flow(t, c, d));
                 break;
-            case core::DataBlock::Output:
+            case core::DataBlock::DataTag::Output:
                 // 对于输出数据，数据在节点要么流出，要么存储于下一时刻，不能释放数据
-                for (TimeStamp t = 0; t < num_time_steps_; t++)
+                for (TimeStamp t = 0; t < total_time; t++)
                     for (NodeId n = 0; n < network_.GetNumNodes(); n++)
                         if (consume_set[d].count({t, n}))
                             solver_.AddConstraint(buffer(t, n, d) == 1);
@@ -229,9 +231,9 @@ namespace planner
             DataBlockId d = data_block.GetId();
             switch (data_block.GetDataTag())
             {
-            case core::DataBlock::Input:
+            case core::DataBlock::DataTag::Input:
                 // 对于输入数据，流量存储于点时，要么上一时刻通过边流入，要么上一时刻已存储，不能无缘无故出现
-                for (TimeStamp t = 0; t < num_time_steps_; t++)
+                for (TimeStamp t = 0; t < total_time; t++)
                     for (NodeId n = 0; n < node_num; n++)
                         if (produce_set[d].count({t, n}))
                             solver_.AddConstraint(buffer(t, n, d) == 1);
@@ -258,9 +260,9 @@ namespace planner
                                 solver_.AddConstraint(inflow == buffer(t, n, d));
                         }
                 break;
-            case core::DataBlock::Output:
+            case core::DataBlock::DataTag::Output:
                 // 对于输出数据，流入的数据必须存储于该节点，或与同类（同名字）输出数据合并，不能释放数据
-                for (TimeStamp t = 1; t < num_time_steps_; t++)
+                for (TimeStamp t = 1; t < total_time; t++)
                     for (NodeId n = 0; n < node_num; n++)
                         if (buffer_enable_set.count({t, n, d}))
                             for (ChainId c : network_.GetInChainIds(n))
@@ -276,23 +278,46 @@ namespace planner
         std::vector<math::Variable> slacks;
 
         // 添加带宽约束
-        for (TimeStamp time = 0; time < num_time_steps_ - 1; time++)
-            if (time_slot_[time].first == TimeSlotType::Normal)
+        if (compute_ticks_.size() == 1)
+        {
+            solver_.CreateVariable("slack_0", math::VariableType::Continuous, 0, INFINITY);
+            math::Variable slack = solver_.GetVariable("slack_0");
+            for (EdgeId e = 0; e < network_.GetNumEdges(); e++)
             {
-                if (schedule_begin_time_ - 1 <= time && time < schedule_end_time_ && (schedule_begin_time_ != time || time_slot_[time - 1].first != TimeSlotType::Normal))
+                math::LinearExpression flow_size = slack;
+                for (const auto &[_, data_block] : data_blocks_)
                 {
-                    size_t slack_id = slacks.size();
-                    solver_.CreateVariable("slack_" + std::to_string(slack_id), math::VariableType::Continuous, 0, INFINITY);
-                    math::Variable slack = solver_.GetVariable("slack_" + std::to_string(slack_id));
-                    slacks.push_back(slack);
+                    DataBlockId d = data_block.GetId();
+                    for (ChainId c : network_.GetChainIdsContainEdge(e))
+                        for (TimeStamp t = 0; t < total_time - 1; t++)
+                            if (flow_enable_set.count({t, c, d}))
+                                flow_size += flow(t, c, d) * data_block.GetSize();
                 }
-                std::vector<TimeStamp> times = {time};
-                Tick slot_cycle = time_slot_[time].second;
-                for (TimeStamp t = time - 1; t >= 0 && time_slot_[t].first == TimeSlotType::Forward; t--)
-                    times.push_back(t), slot_cycle += time_slot_[t].second;
-                for (TimeStamp t = time + 1; t < num_time_steps_ && time_slot_[t].first == TimeSlotType::Backward; t++)
-                    times.push_back(t), slot_cycle += time_slot_[t].second;
-
+                solver_.AddConstraint(flow_size <= network_.GetEdges()[e].bandwidth_bytes_per_tick * (slack + compute_ticks_[0]));
+            }
+        }
+        else
+        {
+            // prefix_transmission_time + first compute_time
+            solver_.CreateVariable("slack_0", math::VariableType::Continuous, 0, INFINITY);
+            math::Variable slack = solver_.GetVariable("slack_0");
+            for (EdgeId e = 0; e < network_.GetNumEdges(); e++)
+            {
+                math::LinearExpression flow_size;
+                for (const auto &[_, data_block] : data_blocks_)
+                {
+                    DataBlockId d = data_block.GetId();
+                    for (ChainId c : network_.GetChainIdsContainEdge(e))
+                        for (TimeStamp t = 0; t <= prefix_transmission_time_; t++)
+                            if (flow_enable_set.count({t, c, d}))
+                                flow_size += flow(t, c, d) * data_block.GetSize();
+                }
+                solver_.AddConstraint(flow_size <= network_.GetEdges()[e].bandwidth_bytes_per_tick * (slack + compute_ticks_[0]));
+            }
+            for (TimeStamp t = prefix_transmission_time_ + 1; t < prefix_transmission_time_ + compute_ticks_.size() - 1; t++)
+            {
+                solver_.CreateVariable("slack_" + std::to_string(t - prefix_transmission_time_), math::VariableType::Continuous, 0, INFINITY);
+                math::Variable slack = solver_.GetVariable("slack_" + std::to_string(t - prefix_transmission_time_));
                 for (EdgeId e = 0; e < network_.GetNumEdges(); e++)
                 {
                     math::LinearExpression flow_size;
@@ -300,21 +325,33 @@ namespace planner
                     {
                         DataBlockId d = data_block.GetId();
                         for (ChainId c : network_.GetChainIdsContainEdge(e))
-                            for (TimeStamp t : times)
-                                if (flow_enable_set.count({t, c, d}))
-                                    flow_size += flow(t, c, d) * data_block.GetSize();
+                            if (flow_enable_set.count({t, c, d}))
+                                flow_size += flow(t, c, d) * data_block.GetSize();
                     }
-                    if (schedule_begin_time_ - 1 <= time && time < schedule_end_time_)
-                        solver_.AddConstraint(flow_size <= network_.GetEdges()[e].bandwidth_bytes_per_cycle * (slacks.back() + slot_cycle));
-                    else
-                        solver_.AddConstraint(flow_size <= network_.GetEdges()[e].bandwidth_bytes_per_cycle * slot_cycle);
+                    solver_.AddConstraint(flow_size <= network_.GetEdges()[e].bandwidth_bytes_per_tick * (slack + compute_ticks_[t - prefix_transmission_time_]));
                 }
             }
+            solver_.CreateVariable("slack_" + std::to_string(compute_ticks_.size() - 1), math::VariableType::Continuous, 0, INFINITY);
+            slack = solver_.GetVariable("slack_" + std::to_string(compute_ticks_.size() - 1));
+            for (EdgeId e = 0; e < network_.GetNumEdges(); e++)
+            {
+                math::LinearExpression flow_size;
+                for (const auto &[_, data_block] : data_blocks_)
+                {
+                    DataBlockId d = data_block.GetId();
+                    for (ChainId c : network_.GetChainIdsContainEdge(e))
+                        for (TimeStamp t = prefix_transmission_time_ + compute_ticks_.size() - 1; t < total_time - 1; t++)
+                            if (flow_enable_set.count({t, c, d}))
+                                flow_size += flow(t, c, d) * data_block.GetSize();
+                }
+                solver_.AddConstraint(flow_size <= network_.GetEdges()[e].bandwidth_bytes_per_tick * (slack + compute_ticks_.back()));
+            }
+        }
 
         std::cerr << solver_.GetConstraintCount() << std::endl;
 
         // 添加节点缓冲约束
-        for (TimeStamp t = 0; t < num_time_steps_; t++)
+        for (TimeStamp t = 0; t < total_time; t++)
             for (NodeId n = 0; n < node_num; n++)
             {
                 math::LinearExpression buffer_sum = -double(shared_memory_byte[{t, n}]);
@@ -333,7 +370,7 @@ namespace planner
         math::LinearExpression obj;
         for (math::Variable &slack : slacks)
             obj += slack * 10000000;
-        for (TimeStamp t = 0; t < num_time_steps_ - 1; t++)
+        for (TimeStamp t = 0; t < total_time - 1; t++)
             for (ChainId c = 0; c < network_.GetNumChains(); c++)
                 for (const auto &[_, data_block] : data_blocks_)
                 {
@@ -347,14 +384,12 @@ namespace planner
         solver_.SetIntermediateResultPath(intermediate_result_path_);
         solver_.Solve(time_limit);
 
-        Tick total_time = 0;
+        Tick total_ticks = 0;
         Energy total_noc_energy = 0;
         Energy total_dram_energy = 0;
-        size_t slot_num = 0;
 
-        for (TimeStamp time = 0; time < num_time_steps_ - 1; time++)
-            if (schedule_begin_time_ <= time && time < schedule_end_time_ && time_slot_[time].first == TimeSlotType::Normal)
-                total_time += time_slot_[time].second + solver_.GetVariable("slack_" + std::to_string(slot_num)).GetValue();
+        for (TimeStamp time = 0; time < compute_ticks_.size(); time++)
+            total_ticks += compute_ticks_[time] + solver_.GetVariable("slack_" + std::to_string(time)).GetValue();
 
         uint64_t total_hops_bytes = 0;
         uint64_t total_bytes = 0;
@@ -365,14 +400,14 @@ namespace planner
             DataBlockId d = data_block.GetId();
             total_bytes += data_block.GetSize();
             bytes_hops[0] += data_block.GetSize();
-            for (TimeStamp time = 0; time < num_time_steps_ - 1; time++)
+            for (TimeStamp time = 0; time < total_time - 1; time++)
                 for (ChainId c = 0; c < network_.GetNumChains(); c++)
                     if (flow_enable_set.count({time, c, d}) && solver_.GetVariable("flow_" + std::to_string(time) + "_" + std::to_string(c) + "_" + std::to_string(d)).GetValue() > 0.5)
                     {
                         const std::vector<EdgeId> &chain_edges = network_.GetEdgeIdsInChain(c);
                         bytes_hops[data_block_hops[d]] -= data_block.GetSize();
                         data_block_hops[d] += chain_edges.size();
-                        while(bytes_hops.size() <= data_block_hops[d])
+                        while (bytes_hops.size() <= data_block_hops[d])
                             bytes_hops.push_back(0);
                         bytes_hops[data_block_hops[d]] += data_block.GetSize();
                         total_hops_bytes += chain_edges.size() * data_block.GetSize();
@@ -392,7 +427,7 @@ namespace planner
             std::ofstream ofs(data_analysis_path_);
             if (ofs.is_open())
             {
-                ofs << "Total Time: " << total_time << std::endl;
+                ofs << "Total Tick: " << total_ticks << std::endl;
                 ofs << "Total NOC Energy: " << total_noc_energy << std::endl;
                 ofs << "Total DRAM Energy: " << total_dram_energy << std::endl;
                 ofs << "Total Bytes: " << total_bytes << std::endl;
@@ -402,12 +437,12 @@ namespace planner
             }
         }
 
-        return std::make_tuple(total_time, total_noc_energy, total_dram_energy);
+        return std::make_tuple(total_ticks, total_noc_energy, total_dram_energy);
     }
 
     std::tuple<Tick, Energy, Energy> DataflowScheduler::EstimateDataflowOverhead(OverheadEstimateType type, Second time_limit)
     {
-        math::VariableType var_type = (type == Relaxed) ? math::VariableType::Continuous : math::VariableType::Binary;
+        math::VariableType var_type = (type == OverheadEstimateType::Relaxed) ? math::VariableType::Continuous : math::VariableType::Binary;
         return SolveDataflowILP(var_type, time_limit);
     }
 } // namespace planner

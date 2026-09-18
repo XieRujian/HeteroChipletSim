@@ -8,6 +8,7 @@
 
 #include "util/common.h"
 
+#include "arch/arch_types.h"
 #include "task.h"
 #include "task/tasks.h"
 
@@ -16,12 +17,13 @@ namespace core
     class ArchImpl
     {
     protected:
+        ArchType type_;
         uint64_t buffer_capacity_kb_;
         std::set<DataBlockName> pre_store_data_blocks_;
 
     public:
-        ArchImpl(const std::map<std::string, std::string> &config_ini);
-        ArchImpl(uint64_t buffer_capacity_kb) : buffer_capacity_kb_(buffer_capacity_kb) {}
+        ArchImpl(ArchType type, const std::map<std::string, std::string> &config_ini);
+        ArchImpl(ArchType type, uint64_t buffer_capacity_kb) : type_(type), buffer_capacity_kb_(buffer_capacity_kb) {}
 
         virtual EvaluationResult Evaluate(const Gemm &gemm) const = 0;
         virtual EvaluationResult Evaluate(const Conv &conv) const = 0;
@@ -32,6 +34,7 @@ namespace core
         bool CheckPreStoreDataBlock(const DataBlockName &data_block_name) const { return pre_store_data_blocks_.count(data_block_name); }
         // uint64_t GetPreStoreSizeBytes() const noexcept { return pre_store_size_bytes_; }
 
+        ArchType GetType() const noexcept { return type_; }
         uint64_t GetBufferSizeBytes() const { return buffer_capacity_kb_ * 1024; }
     };
 

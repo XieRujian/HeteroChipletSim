@@ -2,6 +2,7 @@
 #include <string>
 
 #include "util/ini.h"
+#include "util/random.h"
 
 #include "network.h"
 #include "arch.h"
@@ -47,7 +48,7 @@ namespace core
                 else if (key == "to")
                     edge.to_node = node_name_to_id_.at(prop->valuestring);
                 else if (key == "bandwidth")
-                    edge.bandwidth_bytes_per_cycle = prop->valuedouble;
+                    edge.bandwidth_bytes_per_tick = prop->valuedouble;
                 else if (key == "energy_pj_per_bit")
                     edge.energy_pj_per_bit = prop->valuedouble;
             }
@@ -97,11 +98,39 @@ namespace core
         }
     }
 
+    void Network::ShuffleArchs()
+    {
+        util::shuffle(node_archs_);
+        for (NodeId id = 0; id < GetNumNodes(); ++id)
+            node_of_arch_[node_archs_[id].GetName()] = id;
+    }
+
     double Network::GetChainEnergyPerBit(ChainId c) const
     {
         double energy_pj_per_bit = 0;
         for (EdgeId e : chains_[c].edge_ids)
             energy_pj_per_bit += edges_[e].energy_pj_per_bit;
         return energy_pj_per_bit;
+    }
+
+    const Arch &Network::GetArch(NodeId node) const { return node_archs_.at(node); }
+    Arch &Network::GetArch(NodeId node) { return node_archs_.at(node); }
+
+    const std::vector<Edge> Network::GetEdgesSrcNode(NodeId node) const
+    {
+        std::vector<Edge> edges;
+        for (const Edge &edge : edges_)
+            if (edge.from_node == node)
+                edges.push_back(edge);
+        return edges;
+    }
+
+    const std::vector<NodeId> Network::GetNodes(ArchType type) const
+    {
+        std::vector<NodeId> nodes;
+        for (const auto &arch : node_archs_)
+            if (arch->GetType() == type)
+                nodes.push_back(node_of_arch_.at(arch.GetName()));
+        return nodes;
     }
 }

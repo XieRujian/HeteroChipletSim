@@ -11,7 +11,7 @@ namespace core
         uint64_t rows_per_subarray_;
         uint64_t bit_per_row_;
         uint64_t mac_per_bank_;
-        uint64_t global_bandwidth_bytes_per_cycle_;
+        uint64_t global_bandwidth_bytes_per_tick_;
         uint64_t local_rf_depth_;
         double frequency_ghz_;
 

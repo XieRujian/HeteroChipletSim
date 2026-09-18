@@ -15,7 +15,7 @@ namespace planner
         {
             if (task_name.find("gemm") != 0)
                 gemm = false;
-            if (task_name.find("QKV") != 0)
+            if (task_name.find("attention") != 0)
                 attention = false;
             if (task_name.find("conv") != 0)
                 conv = false;
@@ -47,39 +47,76 @@ namespace planner
             tile_n = std::max(tile_n, n + 1);
         }
 
-        if (tile_m == 4 && tile_k == 8 && tile_n == 4)
-            Mesh4M4N4K8();
+        if (tile_m == 1 && tile_k == 32 && tile_n == 3)
+            Mesh4M1N3K32();
+        else if (tile_m == 1 && tile_k == 2 && tile_n == 4)
+            Mesh4M1N4K2();
+        else if (tile_m == 1 && tile_k == 15 && tile_n == 5)
+            Mesh4M1N5K15();
+        else if (tile_m == 1 && tile_k == 5 && tile_n == 15)
+            Mesh4M1N15K5();
+        else if (tile_m == 1 && tile_k == 4 && tile_n == 24)
+            Mesh4M1N24K4();
+        else if (tile_m == 1 && tile_k == 3 && tile_n == 25)
+            Mesh4M1N25K3();
+        else if (tile_m == 1 && tile_k == 3 && tile_n == 32)
+            Mesh4M1N32K3();
+        else if (tile_m == 1 && tile_k == 4 && tile_n == 32)
+            Mesh4M1N32K4();
+        else if (tile_m == 2 && tile_k == 16 && tile_n == 4)
+            Mesh4M2N4K16();
+        else if (tile_m == 2 && tile_k == 6 && tile_n == 8)
+            Mesh4M2N8K6();
         else if (tile_m == 4 && tile_k == 4 && tile_n == 8)
             Mesh4M4N8K4();
-        else if (tile_m == 4 && tile_k == 4 && tile_n == 24)
-            Mesh4M1N24K4();
-        else if (tile_m == 4 && tile_k == 4 && tile_n == 32)
-            Mesh4M1N32K4();
+        else if (tile_m == 4 && tile_k == 8 && tile_n == 4)
+            Mesh4M4N4K8();
+        else if (tile_m == 8 && tile_k == 8 && tile_n == 2)
+            Mesh4M8N2K8();
+        else if (tile_m == 8 && tile_k == 2 && tile_n == 6)
+            Mesh4M8N6K2();
+        else if (tile_m == 8 && tile_k == 2 && tile_n == 8)
+            Mesh4M8N8K2();
+        else if (tile_m == 12 && tile_k == 2 && tile_n == 2)
+            Mesh4M12N2K2();
+        else if (tile_m == 12 && tile_k == 2 && tile_n == 4)
+            Mesh4M12N4K2();
         else
             std::cerr << "Unsupported task pattern: M=" << tile_m << ", K=" << tile_k << ", N=" << tile_n << std::endl;
     }
 
     void TaskInitializer::InitializeAttention()
     {
-        uint64_t tile_h = 0, tile_m = 0, tile_n = 0;
+        uint64_t batch = 0, tile_h = 0, tile_m = 0, tile_n = 0;
         for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
         {
-            uint64_t h_pos = task_name.find('_', 0) + 1;
+            uint64_t b_pos = task_name.find('_', 0) + 1;
+            uint64_t h_pos = task_name.find('_', b_pos) + 1;
             uint64_t m_pos = task_name.find('_', h_pos) + 1;
             uint64_t n_pos = task_name.find('_', m_pos) + 1;
+            uint64_t b = std::stoul(task_name.substr(b_pos, h_pos - b_pos - 1));
             uint64_t h = std::stoul(task_name.substr(h_pos, m_pos - h_pos - 1));
             uint64_t m = std::stoul(task_name.substr(m_pos, n_pos - m_pos - 1));
             uint64_t n = std::stoul(task_name.substr(n_pos));
 
+            batch = std::max(b, b + 1);
             tile_h = std::max(tile_h, h + 1);
             tile_m = std::max(tile_m, m + 1);
             tile_n = std::max(tile_n, n + 1);
         }
 
-        if (tile_h == 6 && tile_m == 4 && tile_n == 4)
-            Mesh4H6N4M4();
+        if (batch == 1 && tile_h == 6 && tile_m == 4 && tile_n == 4)
+            Mesh4B1H6N4M4();
+        else if (batch == 1 && tile_h == 5 && tile_m == 4 && tile_n == 3)
+            Mesh4B1H5N3M4();
+        else if (batch == 1 && tile_h == 5 && tile_m == 3 && tile_n == 5)
+            Mesh4B1H5N5M3();
+        else if (batch == 1 && tile_h == 5 && tile_m == 1 && tile_n == 15)
+            Mesh4B1H5N15M1();
+        else if (batch == 3 && tile_h == 2 && tile_m == 4 && tile_n == 4)
+            Mesh4B3H2N4M4();
         else
-            std::cerr << "Unsupported task pattern: H=" << tile_h << ", M=" << tile_m << ", N=" << tile_n << std::endl;
+            std::cerr << "Unsupported task pattern: B=" << batch << ", H=" << tile_h << ", M=" << tile_m << ", N=" << tile_n << std::endl;
     }
 
     void TaskInitializer::InitializeConv()
@@ -117,18 +154,19 @@ namespace planner
     std::vector<TimeStamp> TaskInitializer::GetNonZeroTimeSlot() const
     {
         std::vector<TimeStamp> non_zero_time_slot;
-        for (TimeStamp t = task_scheduler_ptr_->schedule_begin_time_; t < task_scheduler_ptr_->schedule_end_time_; ++t)
-            if (task_scheduler_ptr_->time_slot_[t].second > 0)
-                non_zero_time_slot.push_back(t);
+        for (TimeStamp t = 0; t < task_scheduler_ptr_->compute_ticks_.size(); ++t)
+            if (task_scheduler_ptr_->compute_ticks_[t] > 0)
+                non_zero_time_slot.push_back(t + task_scheduler_ptr_->prefix_transmission_time_);
         return non_zero_time_slot;
     }
 
-    void TaskInitializer::Mesh4H6N4M4()
+    void TaskInitializer::Mesh4B1H6N4M4()
     {
         auto non_zero_time_slot = GetNonZeroTimeSlot();
         for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
         {
-            uint64_t h_pos = task_name.find('_', 0) + 1;
+            uint64_t b_pos = task_name.find('_', 0) + 1;
+            uint64_t h_pos = task_name.find('_', b_pos) + 1;
             uint64_t m_pos = task_name.find('_', h_pos) + 1;
             uint64_t n_pos = task_name.find('_', m_pos) + 1;
             uint64_t h = std::stoul(task_name.substr(h_pos, m_pos - h_pos - 1));
@@ -138,6 +176,98 @@ namespace planner
             uint64_t row = (m % 2) * 2 + (n / 2 % 2);
             uint64_t col = (h % 2) * 2 + (n % 2);
             uint64_t time = non_zero_time_slot.at(((h / 2) * 2 + (m / 2)) / 2);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4B1H5N3M4()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t b_pos = task_name.find('_', 0) + 1;
+            uint64_t h_pos = task_name.find('_', b_pos) + 1;
+            uint64_t m_pos = task_name.find('_', h_pos) + 1;
+            uint64_t n_pos = task_name.find('_', m_pos) + 1;
+            uint64_t h = std::stoul(task_name.substr(h_pos, m_pos - h_pos - 1));
+            uint64_t m = std::stoul(task_name.substr(m_pos, n_pos - m_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t id = m * 15 + h * 3 + n;
+            uint64_t row = (id / 2) / 4 % 4;
+            uint64_t col = (id / 2) % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4B1H5N5M3()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t b_pos = task_name.find('_', 0) + 1;
+            uint64_t h_pos = task_name.find('_', b_pos) + 1;
+            uint64_t m_pos = task_name.find('_', h_pos) + 1;
+            uint64_t n_pos = task_name.find('_', m_pos) + 1;
+            uint64_t h = std::stoul(task_name.substr(h_pos, m_pos - h_pos - 1));
+            uint64_t m = std::stoul(task_name.substr(m_pos, n_pos - m_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t id = m * 25 + h * 5 + n;
+            uint64_t row = (id / 2) / 4 % 4;
+            uint64_t col = (id / 2) % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4B1H5N15M1()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t b_pos = task_name.find('_', 0) + 1;
+            uint64_t h_pos = task_name.find('_', b_pos) + 1;
+            uint64_t m_pos = task_name.find('_', h_pos) + 1;
+            uint64_t n_pos = task_name.find('_', m_pos) + 1;
+            uint64_t h = std::stoul(task_name.substr(h_pos, m_pos - h_pos - 1));
+            // uint64_t m = std::stoul(task_name.substr(m_pos, n_pos - m_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t id = h * 15 + n;
+            uint64_t row = (id / 2) / 4 % 4;
+            uint64_t col = (id / 2) % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4B3H2N4M4()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t b_pos = task_name.find('_', 0) + 1;
+            uint64_t h_pos = task_name.find('_', b_pos) + 1;
+            uint64_t m_pos = task_name.find('_', h_pos) + 1;
+            uint64_t n_pos = task_name.find('_', m_pos) + 1;
+            uint64_t b = std::stoul(task_name.substr(b_pos, h_pos - b_pos - 1));
+            // uint64_t h = std::stoul(task_name.substr(h_pos, m_pos - h_pos - 1));
+            uint64_t m = std::stoul(task_name.substr(m_pos, n_pos - m_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = m;
+            uint64_t col = n;
+            uint64_t time = non_zero_time_slot.at(b);
 
             NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
             task_scheduler_ptr_->AllocateTask(task, time, node);
@@ -223,13 +353,226 @@ namespace planner
             uint64_t i_pos = task_name.find('_', h_pos) + 1;
             uint64_t o_pos = task_name.find('_', i_pos) + 1;
             uint64_t w = std::stoul(task_name.substr(w_pos, h_pos - w_pos - 1));
-            //uint64_t h = std::stoul(task_name.substr(h_pos, i_pos - h_pos - 1));
+            // uint64_t h = std::stoul(task_name.substr(h_pos, i_pos - h_pos - 1));
             uint64_t i = std::stoul(task_name.substr(i_pos, o_pos - i_pos - 1));
             uint64_t o = std::stoul(task_name.substr(o_pos));
 
             uint64_t row = (i / 2 % 2) * 2 + o;
             uint64_t col = w * 2 + (i % 2);
             uint64_t time = non_zero_time_slot.at((i / 4) / 2);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N3K32()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            // uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = k % 4;
+            uint64_t col = k / 4 % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N4K2()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = n % 2 * 2 + k;
+            uint64_t col = n < 2 ? 0 : 3;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N5K15()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t id = k * 5 + n;
+            uint64_t row = id % 4;
+            uint64_t col = id / 4 % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N15K5()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t id = k * 15 + n;
+            uint64_t row = id % 4;
+            uint64_t col = id / 4 % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N24K4()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = n % 4;
+            uint64_t col = k;
+            uint64_t time = non_zero_time_slot.at((n / 4) / 2);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N25K3()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t id = k * 25 + n;
+            uint64_t row = id % 4;
+            uint64_t col = id / 4 % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N32K3()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            // uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = n % 4;
+            uint64_t col = n / 4 % 4;
+            uint64_t time = non_zero_time_slot.at(0);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M1N32K4()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = n % 4;
+            uint64_t col = n / 4 % 2 * 2 + (k / 2);
+            uint64_t time = non_zero_time_slot.at(n / 8);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M2N4K16()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = n;
+            uint64_t col = (k % 2) * 2 + m;
+            uint64_t time = non_zero_time_slot.at(k / 4);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M2N8K6()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = n / 4;
+            uint64_t col = (k % 2) * 2 + m;
+            uint64_t time = non_zero_time_slot.at(k / 2);
 
             NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
             task_scheduler_ptr_->AllocateTask(task, time, node);
@@ -278,7 +621,7 @@ namespace planner
         }
     }
 
-    void TaskInitializer::Mesh4M1N24K4()
+    void TaskInitializer::Mesh4M8N2K8()
     {
         auto non_zero_time_slot = GetNonZeroTimeSlot();
         for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
@@ -286,20 +629,20 @@ namespace planner
             uint64_t m_pos = task_name.find('_', 0) + 1;
             uint64_t k_pos = task_name.find('_', m_pos) + 1;
             uint64_t n_pos = task_name.find('_', k_pos) + 1;
-            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
             uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
             uint64_t n = std::stoul(task_name.substr(n_pos));
 
-            uint64_t row = n % 4;
-            uint64_t col = k;
-            uint64_t time = non_zero_time_slot.at((n / 4) / 2);
+            uint64_t row = k % 2 * 2 + n;
+            uint64_t col = m % 4;
+            uint64_t time = non_zero_time_slot.at(m / 4 * 2 + k / 4);
 
             NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
             task_scheduler_ptr_->AllocateTask(task, time, node);
         }
     }
 
-    void TaskInitializer::Mesh4M1N32K4()
+    void TaskInitializer::Mesh4M8N6K2()
     {
         auto non_zero_time_slot = GetNonZeroTimeSlot();
         for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
@@ -307,13 +650,76 @@ namespace planner
             uint64_t m_pos = task_name.find('_', 0) + 1;
             uint64_t k_pos = task_name.find('_', m_pos) + 1;
             uint64_t n_pos = task_name.find('_', k_pos) + 1;
-            // uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
             uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
             uint64_t n = std::stoul(task_name.substr(n_pos));
 
-            uint64_t row = n % 4;
-            uint64_t col = k;
-            uint64_t time = non_zero_time_slot.at((n / 4) / 2);
+            uint64_t row = m / 2;
+            uint64_t col = k % 2 * 2 + n % 2;
+            uint64_t time = non_zero_time_slot.at(n / 2);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M8N8K2()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = k * 2 + n % 2;
+            uint64_t col = m % 4;
+            uint64_t time = non_zero_time_slot.at(m / 4 * 2 + n / 4);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M12N2K2()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = m % 4;
+            uint64_t col = k * 2 + n;
+            uint64_t time = non_zero_time_slot.at(m / 4);
+
+            NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
+            task_scheduler_ptr_->AllocateTask(task, time, node);
+        }
+    }
+
+    void TaskInitializer::Mesh4M12N4K2()
+    {
+        auto non_zero_time_slot = GetNonZeroTimeSlot();
+        for (auto &[task_name, task] : task_scheduler_ptr_->tasks_)
+        {
+            uint64_t m_pos = task_name.find('_', 0) + 1;
+            uint64_t k_pos = task_name.find('_', m_pos) + 1;
+            uint64_t n_pos = task_name.find('_', k_pos) + 1;
+            uint64_t m = std::stoul(task_name.substr(m_pos, k_pos - m_pos - 1));
+            uint64_t k = std::stoul(task_name.substr(k_pos, n_pos - k_pos - 1));
+            uint64_t n = std::stoul(task_name.substr(n_pos));
+
+            uint64_t row = m % 4;
+            uint64_t col = k * 2 + n % 2;
+            uint64_t time = non_zero_time_slot.at(m / 4);
 
             NodeId node = task_scheduler_ptr_->network_.GetNodeId("node_" + std::to_string(row) + "_" + std::to_string(col));
             task_scheduler_ptr_->AllocateTask(task, time, node);

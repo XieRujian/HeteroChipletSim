@@ -134,19 +134,19 @@ namespace math
         return result /= scalar;
     }
 
-    Constraint Variable::operator==(double rhs) const { return Constraint(*this, Constraint::Equal, rhs); }
-    Constraint Variable::operator<=(double rhs) const { return Constraint(*this, Constraint::LessEqual, rhs); }
-    Constraint Variable::operator>=(double rhs) const { return Constraint(*this, Constraint::GreaterEqual, rhs); }
-    Constraint LinearExpression::operator==(const LinearExpression &rhs) const { return Constraint(*this - rhs, Constraint::Equal); }
-    Constraint LinearExpression::operator<=(const LinearExpression &rhs) const { return Constraint(*this - rhs, Constraint::LessEqual); }
-    Constraint LinearExpression::operator>=(const LinearExpression &rhs) const { return Constraint(*this - rhs, Constraint::GreaterEqual); }
+    Constraint Variable::operator==(double rhs) const { return Constraint(*this, Constraint::ConstraintSense::Equal, rhs); }
+    Constraint Variable::operator<=(double rhs) const { return Constraint(*this, Constraint::ConstraintSense::LessEqual, rhs); }
+    Constraint Variable::operator>=(double rhs) const { return Constraint(*this, Constraint::ConstraintSense::GreaterEqual, rhs); }
+    Constraint LinearExpression::operator==(const LinearExpression &rhs) const { return Constraint(*this - rhs, Constraint::ConstraintSense::Equal); }
+    Constraint LinearExpression::operator<=(const LinearExpression &rhs) const { return Constraint(*this - rhs, Constraint::ConstraintSense::LessEqual); }
+    Constraint LinearExpression::operator>=(const LinearExpression &rhs) const { return Constraint(*this - rhs, Constraint::ConstraintSense::GreaterEqual); }
 
     Constraint Variable::operator==(const Variable &rhs) const
     {
         if (solver_ptr_ != rhs.solver_ptr_)
             throw std::invalid_argument("Variables belong to different ILPSolvers.");
 
-        Constraint constraint(*this, Constraint::Equal);
+        Constraint constraint(*this, Constraint::ConstraintSense::Equal);
         constraint.coeff_[rhs.GetId()] = -1.0;
         return constraint;
     }
@@ -156,7 +156,7 @@ namespace math
         if (solver_ptr_ != rhs.solver_ptr_)
             throw std::invalid_argument("Variables belong to different ILPSolvers.");
 
-        Constraint constraint(*this, Constraint::LessEqual);
+        Constraint constraint(*this, Constraint::ConstraintSense::LessEqual);
         constraint.coeff_[rhs.GetId()] = -1.0;
         return constraint;
     }
@@ -166,7 +166,7 @@ namespace math
         if (solver_ptr_ != rhs.solver_ptr_)
             throw std::invalid_argument("Variables belong to different ILPSolvers.");
 
-        Constraint constraint(*this, Constraint::GreaterEqual);
+        Constraint constraint(*this, Constraint::ConstraintSense::GreaterEqual);
         constraint.coeff_[rhs.GetId()] = -1.0;
         return constraint;
     }
@@ -191,7 +191,7 @@ namespace math
     {
         switch (solver_choice_)
         {
-        case Gurobi:
+        case ILPSolver::SolverChoice::Gurobi:
             solve_gurobi(time_limit);
             break;
         }
@@ -204,7 +204,7 @@ namespace math
         var_info_.clear();
         constraints_.clear();
         objective_ = LinearExpression();
-        objective_sense_ = Minimize;
+        objective_sense_ = ILPSolver::ObjectiveSense::Minimize;
         objective_value_ = 0.0;
     }
 }

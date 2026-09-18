@@ -11,16 +11,13 @@
 
 namespace planner
 {
-    enum class TimeSlotType : char;
-
     class DataflowScheduler
     {
         class ReachabilitySets;
 
-        TimeStamp num_time_steps_;
-        std::vector<std::pair<TimeSlotType, Tick>> time_slot_;
-        TimeStamp schedule_begin_time_;
-        TimeStamp schedule_end_time_;
+        std::vector<Tick> compute_ticks_;
+        TimeStamp prefix_transmission_time_;
+        TimeStamp suffix_transmission_time_;
         core::Network network_;
         std::map<DataBlockName, core::DataBlock> data_blocks_;
         std::vector<core::Task> tasks_;
@@ -35,16 +32,16 @@ namespace planner
         bool CheckAllTasksScheduled() const;
 
     public:
-        enum OverheadEstimateType
+        enum class OverheadEstimateType
         {
             Relaxed,
             Strict
         };
 
     public:
-        DataflowScheduler(const std::vector<std::pair<TimeSlotType, Tick>> &time_slot, Tick schedule_begin_time, Tick schedule_end_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks);
-        DataflowScheduler(const std::vector<std::pair<TimeSlotType, Tick>> &time_slot, Tick schedule_begin_time, Tick schedule_end_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::vector<core::Task> &tasks)
-            : num_time_steps_(time_slot.size()), time_slot_(time_slot), schedule_begin_time_(schedule_begin_time), schedule_end_time_(schedule_end_time), network_(network), data_blocks_(data_blocks), tasks_(tasks) {}
+        DataflowScheduler(std::vector<Tick> compute_ticks, Tick prefix_transmission_time, Tick suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks);
+        DataflowScheduler(std::vector<Tick> compute_ticks, Tick prefix_transmission_time, Tick suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::vector<core::Task> &tasks)
+            : compute_ticks_(compute_ticks), prefix_transmission_time_(prefix_transmission_time), suffix_transmission_time_(suffix_transmission_time), network_(network), data_blocks_(data_blocks), tasks_(tasks) {}
 
         void SetIntermediateResultPath(const std::string &path) { intermediate_result_path_ = path; }
         void SetDataAnalysisPath(const std::string &path) { data_analysis_path_ = path; }

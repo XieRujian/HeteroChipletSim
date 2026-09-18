@@ -13,31 +13,29 @@
 #include "util/common.h"
 
 #include "dataflow_scheduler.h"
+#include "data_distributor.h"
 
 namespace planner
 {
     class Framework;
     class TaskScheduler;
-    enum class TimeSlotType : char
-    {
-        Normal,
-        Forward,
-        Backward
-    };
 
     class Phase
     {
     private:
         Framework *framework_ptr_;
         std::string phase_name_;
-        std::vector<std::pair<TimeSlotType, Tick>> time_slot_;
-        TimeStamp num_time_steps_;
-        TimeStamp schedule_begin_time_;
-        TimeStamp schedule_end_time_;
+        Tick base_time_slot_ticks_;
+        TimeStamp prefix_transmission_time_;
+        TimeStamp suffix_transmission_time_;
+        std::vector<Tick> compute_ticks_;
         std::map<TaskName, core::Task> tasks_;
         std::map<DataBlockName, core::DataBlock> data_blocks_;
 
         std::map<std::pair<TimeStamp, NodeId>, Tick> used_compute_ticks_;
+        std::shared_ptr<DataDistributor> data_distributor_;
+
+        void CalculateMinimalComputeTime();
 
     private:
         double compute_omega_ = 10;
@@ -54,10 +52,10 @@ namespace planner
 
         const std::string &GetPhaseName() const noexcept { return phase_name_; }
 
-        const std::vector<std::pair<TimeSlotType, Tick>> &GetTimeSlot() const noexcept { return time_slot_; }
-        TimeStamp GetNumTimeSteps() const noexcept { return num_time_steps_; }
-        TimeStamp GetScheduleBeginTime() const noexcept { return schedule_begin_time_; }
-        TimeStamp GetScheduleEndTime() const noexcept { return schedule_end_time_; }
+        //const std::vector<std::pair<TimeSlotType, Tick>> &GetTimeSlot() const noexcept { return time_slot_; }
+        //TimeStamp GetNumTimeSteps() const noexcept { return num_time_steps_; }
+        //TimeStamp GetScheduleBeginTime() const noexcept { return schedule_begin_time_; }
+        //TimeStamp GetScheduleEndTime() const noexcept { return schedule_end_time_; }
         const std::map<TaskName, core::Task> &GetTasks() const noexcept { return tasks_; }
         const std::map<DataBlockName, core::DataBlock> &GetDataBlocks() const noexcept { return data_blocks_; }
         core::Network &GetNetwork() noexcept;
@@ -65,11 +63,11 @@ namespace planner
 
         void CancelTaskSchedule(TaskName task_name);
         bool ScheduleTask(TimeStamp time, NodeId node, const TaskName &task_name);
-        bool ScheduleTask(TimeStamp time, const NodeName &node_name, const TaskName &task_name) { return ScheduleTask(time + schedule_begin_time_, GetNetwork().GetNodeId(node_name), task_name); }
+        bool ScheduleTask(TimeStamp time, const NodeName &node_name, const TaskName &task_name) { return ScheduleTask(time, GetNetwork().GetNodeId(node_name), task_name); }
         bool CheckAllTasksScheduled() const;
 
         void ScheduleTaskAllocation();
-        std::tuple<Tick, Energy, Energy> EstimateDataflowOverhead(DataflowScheduler::OverheadEstimateType type = DataflowScheduler::Strict, Second time_limit = 21600);
+        std::tuple<Tick, Energy, Energy> EstimateDataflowOverhead(DataflowScheduler::OverheadEstimateType type = DataflowScheduler::OverheadEstimateType::Strict, Second time_limit = 21600);
     };
 }
 

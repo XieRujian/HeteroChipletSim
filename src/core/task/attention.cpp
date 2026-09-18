@@ -19,7 +19,6 @@ namespace core
             else if (key == "head_dim")
                 head_dim = item->valueint;
         }
-        //std::cerr << "Attention: seq_length=" << seq_length << ", kv_size=" << kv_size << ", head_num=" << head_num << ", head_dim=" << head_dim << std::endl;
     }
 
     EvaluationResult Attention::accept(const Arch &arch) const { return arch->Evaluate(*this); }

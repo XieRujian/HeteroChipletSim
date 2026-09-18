@@ -8,7 +8,7 @@ namespace core
     class Storage : public ArchImpl
     {
     public:
-        Storage() : ArchImpl(0xffffffffffff) {}
+        Storage() : ArchImpl(ArchType::DRAM, 0xffffffffffff) {}
 
         EvaluationResult Evaluate(const Gemm &) const override { return {0xffffffffffff, 0}; }
         EvaluationResult Evaluate(const Conv &) const override { return {0xffffffffffff, 0}; }

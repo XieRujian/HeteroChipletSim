@@ -11,12 +11,13 @@
 namespace core
 {
     class Arch;
+    enum class ArchType;
 
     struct Edge
     {
         NodeId from_node;
         NodeId to_node;
-        double bandwidth_bytes_per_cycle;
+        double bandwidth_bytes_per_tick;
         double energy_pj_per_bit;
     };
 
@@ -46,6 +47,7 @@ namespace core
 
         void LoadTopology(std::string json_path);
         void LoadArch(std::string ini_path);
+        void ShuffleArchs();
 
         const NodeName &GetNodeName(NodeId n) const { return node_names_.at(n); }
         NodeId GetNodeId(const NodeName &name) const { return node_name_to_id_.at(name); }
@@ -59,8 +61,10 @@ namespace core
         const std::vector<ChainId> &GetChainIdsContainEdge(EdgeId e) const noexcept { return chain_ids_contain_edge_[e]; }
         const std::vector<EdgeId> &GetEdgeIdsInChain(ChainId c) const noexcept { return chains_[c].edge_ids; }
         const std::vector<Chain> &GetChains() const noexcept { return chains_; }
-        const Arch &GetArch(NodeId node) const { return node_archs_.at(node); }
-        Arch &GetArch(NodeId node) { return node_archs_.at(node); }
+        const Arch &GetArch(NodeId node) const;
+        const std::vector<NodeId> GetNodes(ArchType type) const;
+        const std::vector<Edge> GetEdgesSrcNode(NodeId node) const;
+        Arch &GetArch(NodeId node);
 
         double GetChainEnergyPerBit(ChainId c) const;
     };

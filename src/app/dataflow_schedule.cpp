@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
                 std::cout << "Scheduled task " << task_name << " at time " << time << " on node " << node_name << std::endl;
         }
 
-        auto [time, noc_energy, dram_energy] = phase.EstimateDataflowOverhead(planner::DataflowScheduler::Strict, 300);
+        auto [time, noc_energy, dram_energy] = phase.EstimateDataflowOverhead(planner::DataflowScheduler::OverheadEstimateType::Strict, 300);
         std::cout << "Dataflow overhead: " << time << " ticks, " << noc_energy << " pJ NOC energy, " << dram_energy << " pJ DRAM energy" << std::endl;
     }
     return 0;
