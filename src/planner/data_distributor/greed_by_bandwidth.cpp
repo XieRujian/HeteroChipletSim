@@ -11,89 +11,206 @@ namespace planner
 {
     GreedByBandwidth::GreedByBandwidth(cJSON *config_json)
     {
-        for (cJSON *seq_json = config_json->child; seq_json; seq_json = seq_json->next)
+        for (cJSON *item = config_json->child; item; item = item->next)
         {
-            DistributeSequence seq;
-            for (cJSON *item = seq_json->child; item; item = item->next)
+            std::string key(item->string);
+            if (key == "capacity_by_pim_num")
             {
-                const std::string &key(item->string);
-                if (key == "data_blocks")
+                for (cJSON *pim_num_parse = item->child; pim_num_parse; pim_num_parse = pim_num_parse->next)
                 {
-                    for (cJSON *data_block_item = item->child; data_block_item; data_block_item = data_block_item->next)
-                        seq.data_blocks.push_back(data_block_item->valuestring);
-                }
-                else if (key == "arch_priority")
-                {
-                    for (cJSON *arch_item = item->child; arch_item; arch_item = arch_item->next)
-                        seq.arch_priority.push_back(arch_item->valuestring);
-                }
-                else if (key == "distribute_item")
-                {
-                    std::string distribute_item_str(item->valuestring);
-                    if (distribute_item_str == "Src")
-                        seq.distribute_item = DistributeSequence::Src;
-                    else if (distribute_item_str == "Dst")
-                        seq.distribute_item = DistributeSequence::Dst;
-                    else
-                        throw std::runtime_error("Invalid distribute item: " + distribute_item_str);
+                    Size capacity_bytes = pim_num_parse->valueint;
+                    capacity_by_pim_num_.push_back(capacity_bytes);
                 }
             }
-            sequences_.push_back(seq);
         }
     }
 
-    void GreedByBandwidth::DistributeDataBlocks(const core::Network &network, std::map<DataBlockName, core::DataBlock> &data_blocks)
+    void GreedByBandwidth::DistributeDataBlocks(const std::map<ArchName, core::Arch> &library_, const core::Network &network, std::map<DataBlockName, core::DataBlock> &data_blocks, Tick compute_tick)
     {
         std::vector<std::vector<double>> bandwidths(network.GetNumNodes());
+        uint32_t pim_num = 0;
+        for (NodeId n = 0; n < network.GetNumNodes(); n++)
+            if (library_.at(network.GetArch(n))->GetType() != core::ArchType::PIM)
+                pim_num++;
         for (const auto &edge : network.GetEdges())
-            if (network.GetArch(edge.to_node)->GetType() != core::ArchType::DRAM)
+            if (library_.at(network.GetArch(edge.to_node))->GetType() != core::ArchType::DRAM)
                 bandwidths[edge.from_node].push_back(edge.bandwidth_bytes_per_tick);
+        Size pim_buffer = capacity_by_pim_num_[pim_num];
 
         auto check_tick_limit = [&](Tick limit) -> bool
         {
-            std::vector<std::vector<Tick>> link_ticks;
+            std::vector<std::vector<Tick>> link_ticks_inact_;
+            std::vector<std::vector<Tick>> link_ticks_outact_;
+            std::vector<Size> capacity(network.GetNumNodes(), 0);
+            // std::vector<>
             for (NodeId n = 0; n < network.GetNumNodes(); n++)
-                link_ticks.emplace_back(bandwidths[n].size(), 0);
-            for (const auto &seq : sequences_)
             {
-                uint32_t arch_index = 0;
-                for (const auto &data_block_name : seq.data_blocks)
+                link_ticks_inact_.emplace_back(bandwidths[n].size(), 0);
+                link_ticks_outact_.emplace_back(bandwidths[n].size(), 0);
+            }
+
+            NodeId last_node = 0;
+            for (const auto &[data_block_name, data_block] : data_blocks)
+                if (data_block.GetDataTag() == core::DataBlock::DataTag::InAct)
                 {
-                    const auto &data_block = data_blocks.at(data_block_name);
                     Size size_bytes = data_block.GetSize();
                     bool success_distribute = false;
 
-                    while (arch_index < seq.arch_priority.size())
+                    for (NodeId n_offset = 1; n_offset <= network.GetNumNodes(); n_offset++)
                     {
-                        const auto &arch_name = seq.arch_priority[arch_index];
-                        NodeId node_id = network.GetNodeIdByArch(arch_name);
-                        for (size_t link_index = 0; link_index < bandwidths[node_id].size(); link_index++)
+                        NodeId n = (last_node + n_offset) % network.GetNumNodes();
+                        if (library_.at(network.GetArch(n))->GetType() == core::ArchType::PIM && size_bytes + capacity[n] <= pim_buffer)
                         {
-                            double bandwidth_bytes_per_tick = bandwidths[node_id][link_index];
-                            Tick ticks_needed = std::ceil(size_bytes / bandwidth_bytes_per_tick);
-                            if (link_ticks[node_id][link_index] + ticks_needed <= limit)
+                            for (size_t link_index = 0; link_index < bandwidths[n].size(); link_index++)
                             {
-                                link_ticks[node_id][link_index] += ticks_needed;
-                                if (seq.distribute_item == DistributeSequence::Src)
-                                    data_blocks.at(data_block_name).SetSource(arch_name);
-                                else
-                                    data_blocks.at(data_block_name).SetDestination(arch_name);
-                                success_distribute = true;
-                                break;
+                                double bandwidth_bytes_per_tick = bandwidths[n][link_index];
+                                Tick ticks_needed = std::ceil(size_bytes / bandwidth_bytes_per_tick);
+                                if (link_ticks_inact_[n][link_index] + ticks_needed <= limit)
+                                {
+                                    capacity[n] += size_bytes;
+                                    link_ticks_inact_[n][link_index] += ticks_needed;
+                                    data_blocks.at(data_block_name).SetSource(n);
+                                    success_distribute = true;
+                                    last_node = n;
+                                    break;
+                                }
                             }
-                        }
-                        if (success_distribute)
                             break;
-                        arch_index++;
+                        }
+                    }
+
+                    if (success_distribute)
+                        continue;
+
+                    for (NodeId n_offset = 1; n_offset <= network.GetNumNodes(); n_offset++)
+                    {
+                        NodeId n = (last_node + n_offset) % network.GetNumNodes();
+                        if (library_.at(network.GetArch(n))->GetType() == core::ArchType::DRAM)
+                        {
+                            for (size_t link_index = 0; link_index < bandwidths[n].size(); link_index++)
+                            {
+                                double bandwidth_bytes_per_tick = bandwidths[n][link_index];
+                                Tick ticks_needed = std::ceil(size_bytes / bandwidth_bytes_per_tick);
+                                if (link_ticks_inact_[n][link_index] + ticks_needed <= limit)
+                                {
+                                    link_ticks_inact_[n][link_index] += ticks_needed;
+                                    data_blocks.at(data_block_name).SetSource(n);
+                                    success_distribute = true;
+                                    last_node = n;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                     }
                     if (!success_distribute)
                         return false; // No available architecture for this data block within the tick limit
                 }
-            }
+                else if (data_block.GetDataTag() == core::DataBlock::DataTag::OutAct)
+                {
+                    Size size_bytes = data_block.GetSize();
+                    bool success_distribute = false;
+
+                    for (NodeId n_offset = 0; n_offset < network.GetNumNodes(); n_offset++)
+                    {
+                        NodeId n = (last_node + n_offset) % network.GetNumNodes();
+                        if (library_.at(network.GetArch(n))->GetType() == core::ArchType::PIM && size_bytes + capacity[n] <= pim_buffer)
+                        {
+                            for (size_t link_index = 0; link_index < bandwidths[n].size(); link_index++)
+                            {
+                                double bandwidth_bytes_per_tick = bandwidths[n][link_index];
+                                Tick ticks_needed = std::ceil(size_bytes / bandwidth_bytes_per_tick);
+                                if (link_ticks_outact_[n][link_index] + ticks_needed <= limit)
+                                {
+                                    capacity[n] += size_bytes;
+                                    link_ticks_outact_[n][link_index] += ticks_needed;
+                                    data_blocks.at(data_block_name).SetSource(n);
+                                    success_distribute = true;
+                                    last_node = n;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+
+                    if (success_distribute)
+                        continue;
+
+                    for (NodeId n_offset = 0; n_offset < network.GetNumNodes(); n_offset++)
+                    {
+                        NodeId n = (last_node + n_offset) % network.GetNumNodes();
+                        if (library_.at(network.GetArch(n))->GetType() == core::ArchType::DRAM)
+                        {
+                            for (size_t link_index = 0; link_index < bandwidths[n].size(); link_index++)
+                            {
+                                double bandwidth_bytes_per_tick = bandwidths[n][link_index];
+                                Tick ticks_needed = std::ceil(size_bytes / bandwidth_bytes_per_tick);
+                                if (link_ticks_outact_[n][link_index] + ticks_needed <= limit)
+                                {
+                                    link_ticks_outact_[n][link_index] += ticks_needed;
+                                    data_blocks.at(data_block_name).SetSource(n);
+                                    success_distribute = true;
+                                    last_node = n;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (!success_distribute)
+                        return false; // No available architecture for this data block within the tick limit
+                }
+
+            for (const auto &[data_block_name, data_block] : data_blocks)
+                if (data_block.GetDataTag() == core::DataBlock::DataTag::Weight)
+                {
+                    Size size_bytes = data_block.GetSize();
+                    bool success_distribute = false;
+
+                    for (NodeId n = 0; n < network.GetNumNodes(); n++)
+                        if (library_.at(network.GetArch(n))->GetType() == core::ArchType::PIM && size_bytes + capacity[n] <= pim_buffer)
+                        {
+                            for (size_t link_index = 0; link_index < bandwidths[n].size(); link_index++)
+                            {
+                                double bandwidth_bytes_per_tick = bandwidths[n][link_index];
+                                Tick ticks_needed = std::ceil(size_bytes / bandwidth_bytes_per_tick);
+                                if (link_ticks_inact_[n][link_index] + ticks_needed <= limit)
+                                {
+                                    capacity[n] += size_bytes;
+                                    link_ticks_inact_[n][link_index] += ticks_needed;
+                                    data_blocks.at(data_block_name).SetSource(n);
+                                    success_distribute = true;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+
+                    for (NodeId n = 0; n < network.GetNumNodes(); n++)
+                        if (library_.at(network.GetArch(n))->GetType() == core::ArchType::DRAM)
+                        {
+                            for (size_t link_index = 0; link_index < bandwidths[n].size(); link_index++)
+                            {
+                                double bandwidth_bytes_per_tick = bandwidths[n][link_index];
+                                Tick ticks_needed = std::ceil(size_bytes / bandwidth_bytes_per_tick);
+                                if (link_ticks_inact_[n][link_index] + ticks_needed <= limit)
+                                {
+                                    link_ticks_inact_[n][link_index] += ticks_needed;
+                                    data_blocks.at(data_block_name).SetSource(n);
+                                    success_distribute = true;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    if (!success_distribute)
+                        return false; // No available architecture for this data block within the tick limit
+                }
             return true; // All data blocks distributed within the tick limit
         };
 
-        Tick l = 0, r = std::numeric_limits<Tick>::max();
+        Tick l = compute_tick, r = std::numeric_limits<Tick>::max();
         while (l < r)
         {
             Tick mid = l + (r - l) / 2;

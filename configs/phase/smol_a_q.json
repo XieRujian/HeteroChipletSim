@@ -1,0 +1,230 @@
+{
+    "data_blocks": {
+        "input_0_0": {
+            "shape": [
+                50,
+                360
+            ],
+            "dtype": "fp16",
+            "tag": "Input"
+        },
+        "input_0_1": {
+            "shape": [
+                50,
+                360
+            ],
+            "dtype": "fp16",
+            "tag": "Input"
+        },
+        "weight_0_0": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "weight_0_1": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "weight_0_2": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "weight_0_3": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "weight_1_0": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "weight_1_1": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "weight_1_2": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "weight_1_3": {
+            "shape": [
+                360,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Weight"
+        },
+        "output_0_0": {
+            "shape": [
+                50,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Output"
+        },
+        "output_0_1": {
+            "shape": [
+                50,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Output"
+        },
+        "output_0_2": {
+            "shape": [
+                50,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Output"
+        },
+        "output_0_3": {
+            "shape": [
+                50,
+                240
+            ],
+            "dtype": "fp16",
+            "tag": "Output"
+        }
+    },
+    "tasks": {
+        "gemm_0_0_0": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_0",
+                "weight_0_0"
+            ],
+            "outputs": [
+                "output_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "gemm_0_0_1": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_0",
+                "weight_0_1"
+            ],
+            "outputs": [
+                "output_0_1"
+            ],
+            "shared_memory_byte": 0
+        },
+        "gemm_0_0_2": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_0",
+                "weight_0_2"
+            ],
+            "outputs": [
+                "output_0_2"
+            ],
+            "shared_memory_byte": 0
+        },
+        "gemm_0_0_3": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_0",
+                "weight_0_3"
+            ],
+            "outputs": [
+                "output_0_3"
+            ],
+            "shared_memory_byte": 0
+        },
+        "gemm_0_1_0": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_1",
+                "weight_1_0"
+            ],
+            "outputs": [
+                "output_0_0"
+            ],
+            "shared_memory_byte": 0
+        },
+        "gemm_0_1_1": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_1",
+                "weight_1_1"
+            ],
+            "outputs": [
+                "output_0_1"
+            ],
+            "shared_memory_byte": 0
+        },
+        "gemm_0_1_2": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_1",
+                "weight_1_2"
+            ],
+            "outputs": [
+                "output_0_2"
+            ],
+            "shared_memory_byte": 0
+        },
+        "gemm_0_1_3": {
+            "type": "Gemm",
+            "m": 50,
+            "n": 240,
+            "k": 360,
+            "inputs": [
+                "input_0_1",
+                "weight_1_3"
+            ],
+            "outputs": [
+                "output_0_3"
+            ],
+            "shared_memory_byte": 0
+        }
+    }
+}

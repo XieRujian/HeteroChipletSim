@@ -2,7 +2,6 @@
 
 #include "planner/framework.h"
 #include "planner/phase.h"
-#include "util/cJSON.h"
 #include "util/ini.h"
 
 int main(int argc, char *argv[])
@@ -10,8 +9,10 @@ int main(int argc, char *argv[])
     std::string lib_name = argv[1];
     std::string root_path = "library/" + lib_name;
     planner::Framework framework(root_path);
-    if (argc == 2)
-        framework.TaskSchedule();
+    if (argc == 4)
+    {
+        framework.FindArchFixedNum()
+    }
     else if (argc == 3)
     {
         uint64_t phase_id = std::stoull(argv[2]);

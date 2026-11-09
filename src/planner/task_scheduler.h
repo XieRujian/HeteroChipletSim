@@ -15,19 +15,23 @@
 
 namespace planner
 {
+    class Framework;
+
     class TaskScheduler
     {
+        const Framework *framework_ptr_;
+        const std::vector<Tick> &compute_ticks_;
         TimeStamp prefix_transmission_time_;
         TimeStamp suffix_transmission_time_;
-        std::vector<Tick> compute_ticks_;
-        core::Network network_;
+        const core::Network &network_;
         std::map<DataBlockName, core::DataBlock> data_blocks_;
         std::map<TaskName, core::Task> tasks_;
 
         std::shared_ptr<DataflowScheduler> dataflow_scheduler_;
 
     public:
-        TaskScheduler(const std::vector<Tick> &compute_ticks,
+        TaskScheduler(const Framework *framework_ptr,
+                      const std::vector<Tick> &compute_ticks,
                       TimeStamp prefix_transmission_time,
                       TimeStamp suffix_transmission_time,
                       const core::Network &network,
@@ -40,6 +44,8 @@ namespace planner
         void SetSearchResultPath(const std::string &path) { search_result_path_ = path; }
         bool CheckAllTasksScheduled() const;
         void SearchForTaskAllocation();
+        const std::map<DataBlockName, core::DataBlock> &GetDataBlocks() const noexcept { return data_blocks_; }
+        const std::map<TaskName, core::Task> &GetTasks() const noexcept { return tasks_; }
 
         friend class TaskInitializer;
 

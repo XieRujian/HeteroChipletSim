@@ -58,10 +58,6 @@ namespace core
 
     EvaluationResult PIM::Evaluate(const Gemm &gemm) const
     {
-        for (DataBlockName data_block_name : gemm.GetWeightBlockNames())
-            if (!CheckPreStoreDataBlock(data_block_name))
-                return {0xffffffffffff, 0};
-
         Tick execution_ticks = EvaluateGemmTick(gemm.m, gemm.n, gemm.k, 1);
         Energy dynamic_energy_pj = EvaluateGemmDynamicEnergy(gemm.m, gemm.n, gemm.k, 1);
         return {execution_ticks, dynamic_energy_pj};
@@ -117,13 +113,5 @@ namespace core
         }
 
         return {execution_ticks, dynamic_energy_pj};
-    }
-
-    bool PIM::CanSchedule(const Task &task) const
-    {
-        for (DataBlockName data_block_name : task->GetWeightBlockNames())
-            if (!CheckPreStoreDataBlock(data_block_name))
-                return false;
-        return true;
     }
 } // namespace core

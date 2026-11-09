@@ -7,22 +7,11 @@ namespace planner
 {
     class GreedByBandwidth : public DataDistributor
     {
-        struct DistributeSequence
-        {
-            std::vector<DataBlockName> data_blocks;
-            std::vector<ArchName> arch_priority;
-            enum
-            {
-                Src,
-                Dst
-            } distribute_item;
-        };
-
-        std::vector<DistributeSequence> sequences_;
+        std::vector<Size> capacity_by_pim_num_;
 
     public:
         GreedByBandwidth(cJSON *config_json);
-        void DistributeDataBlocks(const core::Network &network, std::map<DataBlockName, core::DataBlock> &data_blocks) override;
+        void DistributeDataBlocks(const std::map<ArchName, core::Arch> &library_, const core::Network &network, std::map<DataBlockName, core::DataBlock> &data_blocks, Tick compute_tick) override;
     };
 } // namespace planner
 

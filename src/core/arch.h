@@ -19,7 +19,6 @@ namespace core
     protected:
         ArchType type_;
         uint64_t buffer_capacity_kb_;
-        std::set<DataBlockName> pre_store_data_blocks_;
 
     public:
         ArchImpl(ArchType type, const std::map<std::string, std::string> &config_ini);
@@ -28,11 +27,6 @@ namespace core
         virtual EvaluationResult Evaluate(const Gemm &gemm) const = 0;
         virtual EvaluationResult Evaluate(const Conv &conv) const = 0;
         virtual EvaluationResult Evaluate(const Attention &attention) const = 0;
-        virtual bool CanSchedule(const Task &task) const = 0;
-
-        void AddPreStoreDataBlock(const DataBlockName &data_block_name);
-        bool CheckPreStoreDataBlock(const DataBlockName &data_block_name) const { return pre_store_data_blocks_.count(data_block_name); }
-        // uint64_t GetPreStoreSizeBytes() const noexcept { return pre_store_size_bytes_; }
 
         ArchType GetType() const noexcept { return type_; }
         uint64_t GetBufferSizeBytes() const { return buffer_capacity_kb_ * 1024; }

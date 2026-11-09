@@ -9,108 +9,92 @@ def get_parser():
     parser.add_argument("--output_file", type=str, required=True,
                         help="File to save generated data")
 
-    parser.add_argument("--time_slot_types", type=str, nargs='+',
-                        required=True, help="Time slot types for task scheduling")
-    parser.add_argument("--time_slot_cycles", type=int, nargs='+',
-                        required=True, help="Time slot cycles for task scheduling")
-    parser.add_argument("--schedule_begin", type=int,
-                        required=True, help="Begin time stamp for task scheduling")
-    parser.add_argument("--schedule_end", type=int,
-                        required=True, help="End time stamp for task scheduling")
-
+    parser.add_argument("--batch", type=int, default=1,
+                        help="batch for Attention")
     parser.add_argument("--seq_len", type=int, required=True,
                         help="seq_len for Attention")
     parser.add_argument("--kv_size", type=int, required=True,
                         help="kv_size for Attention")
-    parser.add_argument("--hidden", type=int, required=True,
+    parser.add_argument("--head_dim", type=int, required=True,
                         help="Parallel size for Attention")
-    parser.add_argument("--num_heads", type=int, required=True,
+    parser.add_argument("--head_num", type=int, required=True,
                         help="Number of heads for Attention")
-    
+
     parser.add_argument('--seq_tile_size', type=int, required=True,
                         help='Tile size for sequence parallelism in Attention')
     parser.add_argument("--head_tile_size", type=int, required=True,
                         help="Tile size for head parallelism in Attention")
     parser.add_argument("--kv_tile_size", type=int, required=True,
                         help="Tile size for row parallelism in Attention")
+
+    parser.add_argument("--data_type", type=str, default="int8", choices=["int8", "fp16", "fp32"],
+                        help="Data type of Attention")
     return parser
 
 
 parser = get_parser()
 args = parser.parse_args()
 
-M = args.seq_len
-N = args.kv_size
-K = args.hidden
-num_heads = args.num_heads
-head_dim = K // num_heads
+data_type = args.data_type
+seq_len = args.seq_len
+kv_size = args.kv_size
+batch = args.batch
+head_num = args.head_num
+head_dim = args.head_dim
 
 seq_tile_size = args.seq_tile_size
 head_tile_size = args.head_tile_size
 kv_tile_size = args.kv_tile_size
-seq_tile = (M + seq_tile_size - 1) // seq_tile_size
-head_tile = num_heads // head_tile_size
-kv_tile = (N + kv_tile_size - 1) // kv_tile_size
-
-if len(args.time_slot_types) != len(args.time_slot_cycles):
-    raise ValueError(
-        "The length of time_slot_types and time_slot_cycles must be the same")
-
-time_slot = []
-for i in range(len(args.time_slot_types)):
-    time_slot.append({
-        "type": args.time_slot_types[i],
-        "cycles": args.time_slot_cycles[i]
-    })
+seq_tile = (seq_len + seq_tile_size - 1) // seq_tile_size
+head_tile = head_num // head_tile_size
+kv_tile = (kv_size + kv_tile_size - 1) // kv_tile_size
 
 data_info = {}
-for i in range(seq_tile):
-    for j in range(head_tile):
-        data_info[f"Q_{i}_{j}"] = {
-            "shape": [seq_tile_size, head_tile_size * head_dim],
-            "dtype": "int8",
-            "tag": "Input",
-            "source": "Storage"
-        }
-
-for j in range(kv_tile):
-    for k in range(head_tile):
-        data_info[f"KV_{j}_{k}"] = {
-            "shape": [kv_tile_size, head_tile_size * head_dim * 2],
-            "dtype": "int8",
-            "tag": "Input",
-            "source": "Storage"
-        }
-
-for i in range(seq_tile):
-    for k in range(kv_tile):
-        data_info[f"output_{i}_{k}"] = {
-            "shape": [seq_tile_size, head_tile_size * head_dim],
-            "dtype": "int8",
-            "tag": "Output",
-            "destination": "Storage"
-        }
-
-task_info = {}
-for k in range(head_tile):
+for b in range(batch):
     for i in range(seq_tile):
-        for j in range(kv_tile):
-            key = f"QKV_{k}_{i}_{j}"
-            task_info[key] = {
-                "type": "Attention",
-                "seq_length": seq_tile_size,
-                "head_num": head_tile_size,
-                "head_dim": head_dim,
-                "kv_size": kv_tile_size,
-                "inputs": [f"Q_{i}_{k}"] + [f"KV_{j}_{k}"],
-                "outputs": [f"output_{i}_{j}"],
-                "shared_memory_byte": 0
+        for k in range(head_tile):
+            data_info[f"Q_{b}_{i}_{k}"] = {
+                "shape": [min(seq_tile_size, seq_len - i * seq_tile_size), head_tile_size * head_dim],
+                "dtype": data_type,
+                "tag": "Input"
             }
 
+for b in range(batch):
+    for j in range(kv_tile):
+        for k in range(head_tile):
+            data_info[f"KV_{b}_{j}_{k}"] = {
+                "shape": [min(kv_tile_size, kv_size - j * kv_tile_size), head_tile_size * head_dim * 2],
+                "dtype": data_type,
+                "tag": "Input"
+            }
+
+for b in range(batch):
+    for i in range(seq_tile):
+        for k in range(head_tile):
+            data_info[f"output_{b}_{i}_{k}"] = {
+                "shape": [min(seq_tile_size, seq_len - i * seq_tile_size), head_tile_size * head_dim],
+                "dtype": data_type,
+                "tag": "Output"
+            }
+
+task_info = {}
+for b in range(batch):
+    for k in range(head_tile):
+        for i in range(seq_tile):
+            for j in range(kv_tile):
+                key = f"attention_{b}_{k}_{i}_{j}"
+                task_info[key] = {
+                    "type": "Attention",
+                    "seq_length": seq_tile_size,
+                    "head_num": head_tile_size,
+                    "head_dim": head_dim,
+                    "kv_size": kv_tile_size,
+                    "inputs": [f"Q_{b}_{i}_{k}"] + [f"KV_{b}_{j}_{k}"],
+                    "outputs": [f"output_{b}_{i}_{k}"],
+                    "shared_memory_byte": 0
+                }
+
 json_data = {
-    "time_slot": time_slot,
-    "schedule_begin": args.schedule_begin,
-    "schedule_end": args.schedule_end,
     "data_blocks": data_info,
     "tasks": task_info
 }

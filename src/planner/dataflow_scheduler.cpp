@@ -12,8 +12,8 @@
 
 namespace planner
 {
-    DataflowScheduler::DataflowScheduler(std::vector<Tick> compute_ticks, Tick prefix_transmission_time, Tick suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks)
-        : compute_ticks_(compute_ticks), prefix_transmission_time_(prefix_transmission_time), suffix_transmission_time_(suffix_transmission_time), network_(network), data_blocks_(data_blocks)
+    DataflowScheduler::DataflowScheduler(const Phase *phase_ptr, const std::vector<Tick> &compute_ticks, TimeStamp prefix_transmission_time, TimeStamp suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks)
+        : phase_ptr_(phase_ptr), compute_ticks_(compute_ticks), prefix_transmission_time_(prefix_transmission_time), suffix_transmission_time_(suffix_transmission_time), network_(network), data_blocks_(data_blocks)
     {
         for (const auto &[name, task] : tasks)
             tasks_.push_back(task);
@@ -45,15 +45,15 @@ namespace planner
         for (auto &[_, data_block] : data_blocks_)
         {
             DataBlockId d = data_block.GetId();
-            if (!data_block.GetSource().empty())
+            if (data_block.GetDataTag() == core::DataBlock::DataTag::InAct || data_block.GetDataTag() == core::DataBlock::DataTag::Weight)
             {
-                NodeId node = network_.GetNodeIdByArch(data_block.GetSource());
+                NodeId node = data_block.GetSource();
                 reachable_set.insert({0, node, d});
                 produce_set[d].insert({0, node});
             }
-            if (!data_block.GetDestination().empty())
+            if (data_block.GetDataTag() == core::DataBlock::DataTag::OutAct)
             {
-                NodeId node = network_.GetNodeIdByArch(data_block.GetDestination());
+                NodeId node = data_block.GetDestination();
                 can_reach_set.insert({total_time - 1, node, d});
                 consume_set[d].insert({total_time - 1, node});
             }
@@ -171,14 +171,14 @@ namespace planner
 
         for (const auto &[name, data_block] : data_blocks_)
         {
-            if (!data_block.GetSource().empty())
+            if (data_block.GetDataTag() == core::DataBlock::DataTag::InAct || data_block.GetDataTag() == core::DataBlock::DataTag::Weight)
             { // 添加初始数据存在的约束
-                NodeId node = network_.GetNodeIdByArch(data_block.GetSource());
+                NodeId node = data_block.GetSource();
                 solver_.AddConstraint(buffer(0, node, data_block.GetId()) == 1);
             }
-            if (!data_block.GetDestination().empty())
+            if (data_block.GetDataTag() == core::DataBlock::DataTag::OutAct)
             { // 添加最终数据存在的约束
-                NodeId node = network_.GetNodeIdByArch(data_block.GetDestination());
+                NodeId node = data_block.GetDestination();
                 solver_.AddConstraint(buffer(total_time - 1, node, data_block.GetId()) == 1);
             }
         }
@@ -192,7 +192,8 @@ namespace planner
             DataBlockId d = data_block.GetId();
             switch (data_block.GetDataTag())
             {
-            case core::DataBlock::DataTag::Input:
+            case core::DataBlock::DataTag::InAct:
+            case core::DataBlock::DataTag::Weight:
                 // 对于输入数据，流出时同一时刻必须存储于起点
                 for (TimeStamp t = 0; t + 1 < total_time; t++)
                     for (ChainId c = 0; c < network_.GetNumChains(); c++)
@@ -200,7 +201,7 @@ namespace planner
                             solver_.AddConstraint(buffer(t, network_.GetChains()[c].from_node, d) >=
                                                   flow(t, c, d));
                 break;
-            case core::DataBlock::DataTag::Output:
+            case core::DataBlock::DataTag::OutAct:
                 // 对于输出数据，数据在节点要么流出，要么存储于下一时刻，不能释放数据
                 for (TimeStamp t = 0; t < total_time; t++)
                     for (NodeId n = 0; n < network_.GetNumNodes(); n++)
@@ -231,7 +232,8 @@ namespace planner
             DataBlockId d = data_block.GetId();
             switch (data_block.GetDataTag())
             {
-            case core::DataBlock::DataTag::Input:
+            case core::DataBlock::DataTag::InAct:
+            case core::DataBlock::DataTag::Weight:
                 // 对于输入数据，流量存储于点时，要么上一时刻通过边流入，要么上一时刻已存储，不能无缘无故出现
                 for (TimeStamp t = 0; t < total_time; t++)
                     for (NodeId n = 0; n < node_num; n++)
@@ -260,7 +262,7 @@ namespace planner
                                 solver_.AddConstraint(inflow == buffer(t, n, d));
                         }
                 break;
-            case core::DataBlock::DataTag::Output:
+            case core::DataBlock::DataTag::OutAct:
                 // 对于输出数据，流入的数据必须存储于该节点，或与同类（同名字）输出数据合并，不能释放数据
                 for (TimeStamp t = 1; t < total_time; t++)
                     for (NodeId n = 0; n < node_num; n++)
@@ -314,7 +316,7 @@ namespace planner
                 }
                 solver_.AddConstraint(flow_size <= network_.GetEdges()[e].bandwidth_bytes_per_tick * (slack + compute_ticks_[0]));
             }
-            for (TimeStamp t = prefix_transmission_time_ + 1; t < prefix_transmission_time_ + compute_ticks_.size() - 1; t++)
+            for (TimeStamp t = prefix_transmission_time_ + 1; t < prefix_transmission_time_ + TimeStamp(compute_ticks_.size()) - 1; t++)
             {
                 solver_.CreateVariable("slack_" + std::to_string(t - prefix_transmission_time_), math::VariableType::Continuous, 0, INFINITY);
                 math::Variable slack = solver_.GetVariable("slack_" + std::to_string(t - prefix_transmission_time_));
@@ -361,7 +363,7 @@ namespace planner
                     if (buffer_enable_set.count({t, n, d}))
                         buffer_sum += buffer(t, n, d) * data_block.GetSize();
                 }
-                solver_.AddConstraint(buffer_sum <= network_.GetArch(n)->GetBufferSizeBytes());
+                solver_.AddConstraint(buffer_sum <= phase_ptr_->GetArch(n)->GetBufferSizeBytes());
             }
 
         std::cerr << solver_.GetConstraintCount() << std::endl;
@@ -388,7 +390,7 @@ namespace planner
         Energy total_noc_energy = 0;
         Energy total_dram_energy = 0;
 
-        for (TimeStamp time = 0; time < compute_ticks_.size(); time++)
+        for (TimeStamp time = 0; time < TimeStamp(compute_ticks_.size()); time++)
             total_ticks += compute_ticks_[time] + solver_.GetVariable("slack_" + std::to_string(time)).GetValue();
 
         uint64_t total_hops_bytes = 0;

@@ -13,7 +13,6 @@ namespace core
         EvaluationResult Evaluate(const Gemm &) const override { return {0xffffffffffff, 0}; }
         EvaluationResult Evaluate(const Conv &) const override { return {0xffffffffffff, 0}; }
         EvaluationResult Evaluate(const Attention &) const override { return {0xffffffffffff, 0}; }
-        bool CanSchedule(const Task &) const override { return false; }
     };
 
 } // namespace core

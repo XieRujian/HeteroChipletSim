@@ -12,13 +12,15 @@
 #include "util/ini.h"
 #include "util/random.h"
 
+#include "framework.h"
 #include "phase.h"
 #include "task_initializer.h"
 #include "task_scheduler.h"
 
 namespace planner
 {
-    TaskScheduler::TaskScheduler(const std::vector<Tick> &compute_ticks,
+    TaskScheduler::TaskScheduler(const Framework *framework_ptr,
+                                 const std::vector<Tick> &compute_ticks,
                                  TimeStamp prefix_transmission_time,
                                  TimeStamp suffix_transmission_time,
                                  const core::Network &network,
@@ -27,7 +29,8 @@ namespace planner
                                  double compute_omega, double buffer_omega,
                                  double spatial_omega, double temporal_omega,
                                  double dependency_omega)
-        : compute_ticks_(compute_ticks),
+        : framework_ptr_(framework_ptr),
+          compute_ticks_(compute_ticks),
           prefix_transmission_time_(prefix_transmission_time),
           suffix_transmission_time_(suffix_transmission_time),
           network_(network), data_blocks_(data_blocks), tasks_(tasks),
@@ -114,16 +117,10 @@ namespace planner
 
         for (auto &[_, data_block] : data_blocks_)
         {
-            if (!data_block.GetSource().empty())
-            {
-                NodeId node = network_.GetNodeIdByArch(data_block.GetSource());
-                produce_set_[data_block.GetId()].emplace(0, node);
-            }
-            if (!data_block.GetDestination().empty())
-            {
-                NodeId node = network_.GetNodeIdByArch(data_block.GetDestination());
-                consume_set_[data_block.GetId()].emplace(num_time_steps - 1, node);
-            }
+            if (data_block.GetDataTag() == core::DataBlock::DataTag::InAct || data_block.GetDataTag() == core::DataBlock::DataTag::Weight)
+                produce_set_[data_block.GetId()].emplace(0, data_block.GetSource());
+            if (data_block.GetDataTag() == core::DataBlock::DataTag::OutAct)
+                consume_set_[data_block.GetId()].emplace(num_time_steps - 1, data_block.GetDestination());
         }
 
         for (auto &[name, task] : tasks_)
@@ -133,7 +130,7 @@ namespace planner
             if (time == INVALID_TIME || node == INVALID_NODE)
                 continue;
             task_schedule_[{time, node}].push_back(name);
-            auto evaluation = network_.GetArch(node).Evaluate(task);
+            auto evaluation = framework_ptr_->GetArch(node).Evaluate(task);
             used_compute_cycles_[{time, node}] += evaluation.execution_ticks;
             shared_memory_byte_[{time, node}] += task->GetSharedMemoryByte();
             for (const DataBlockName &input_block_name : task->GetInputBlockNames())
@@ -165,7 +162,7 @@ namespace planner
         if (task.GetScheduledTime() != INVALID_TIME && task.GetScheduledNode() != INVALID_NODE)
             CancelAllocation(task);
 
-        auto evaluation = network_.GetArch(node).Evaluate(task);
+        auto evaluation = framework_ptr_->GetArch(node).Evaluate(task);
         task_schedule_[{time, node}].push_back(task->GetName());
         used_compute_cycles_[{time, node}] += evaluation.execution_ticks;
         shared_memory_byte_[{time, node}] += task->GetSharedMemoryByte();
@@ -201,7 +198,7 @@ namespace planner
         if (time == INVALID_TIME || node == INVALID_NODE)
             return;
 
-        auto evaluation = network_.GetArch(node).Evaluate(task);
+        auto evaluation = framework_ptr_->GetArch(node).Evaluate(task);
         task_schedule_[{time, node}].erase(std::find(task_schedule_[{time, node}].begin(), task_schedule_[{time, node}].end(), task->GetName()));
         used_compute_cycles_[{time, node}] -= evaluation.execution_ticks;
         shared_memory_byte_[{time, node}] -= task->GetSharedMemoryByte();
@@ -299,7 +296,7 @@ namespace planner
         for (const auto &[key, used_buffer_capacity] : used_buffer_capacity_)
         {
             auto [time, node] = key;
-            Size capacity = network_.GetArch(node)->GetBufferSizeBytes();
+            Size capacity = framework_ptr_->GetArch(node)->GetBufferSizeBytes();
             double utilization = double(used_buffer_capacity - shared_memory_byte_.at(key)) / capacity;
             evaluation_buffer += buffer_omega_ * util::pow(utilization, 10);
         }
@@ -320,13 +317,13 @@ namespace planner
     std::vector<std::pair<TimeStamp, NodeId>> TaskScheduler::GetOverloadedTimeNode() const
     {
         std::vector<std::pair<TimeStamp, NodeId>> overloaded_time_node;
-        for (TimeStamp time = prefix_transmission_time_; time < prefix_transmission_time_ + compute_ticks_.size(); ++time)
+        for (TimeStamp time = prefix_transmission_time_; time < prefix_transmission_time_ + TimeStamp(compute_ticks_.size()); ++time)
             for (NodeId node = 0; node < network_.GetNumNodes(); ++node)
             {
                 auto task_schedule_it = task_schedule_.find({time, node});
                 if (task_schedule_it == task_schedule_.end() || task_schedule_it->second.empty())
                     continue;
-                if (used_compute_cycles_.at({time, node}) > compute_ticks_[time - prefix_transmission_time_] || used_buffer_capacity_.at({time, node}) > network_.GetArch(node)->GetBufferSizeBytes())
+                if (used_compute_cycles_.at({time, node}) > compute_ticks_[time - prefix_transmission_time_] || used_buffer_capacity_.at({time, node}) > framework_ptr_->GetArch(node)->GetBufferSizeBytes())
                 {
                     // std::cerr  << "Overloaded time node: " << time << ", " << node << ", used compute cycles: " << used_compute_cycles_.at({time, node}) << ", used buffer capacity: " << used_buffer_capacity_.at({time, node}) << ", task_num: " << task_schedule_it->second.size() << std::endl;
                     overloaded_time_node.push_back({time, node});
@@ -408,17 +405,17 @@ namespace planner
                         do
                         {
                             node = util::uniform_u(0, network_.GetNumNodes() - 1);
-                        } while (!network_.GetArch(node)->CanSchedule(*task));
+                        } while (framework_ptr_->GetArch(node)->GetType() == core::ArchType::DRAM);
                         AllocateTask(*task, time, node);
                     }
                     else
                     {
                         std::vector<std::pair<TimeStamp, NodeId>> idle_time_node;
                         for (NodeId node = 0; node < network_.GetNumNodes(); ++node)
-                            if (network_.GetArch(node)->CanSchedule(*task))
+                            if (framework_ptr_->GetArch(node)->GetType() != core::ArchType::DRAM)
                             {
-                                auto evaluation = network_.GetArch(node).Evaluate(*task);
-                                for (TimeStamp t = prefix_transmission_time_; t < prefix_transmission_time_ + compute_ticks_.size(); ++t)
+                                auto evaluation = framework_ptr_->GetArch(node).Evaluate(*task);
+                                for (TimeStamp t = prefix_transmission_time_; t < prefix_transmission_time_ + TimeStamp(compute_ticks_.size()); ++t)
                                     if (evaluation.execution_ticks + used_compute_cycles_[{t, node}] <= compute_ticks_[t - prefix_transmission_time_])
                                         idle_time_node.push_back({t, node});
                             }
@@ -436,7 +433,7 @@ namespace planner
                             do
                             {
                                 node = util::uniform_u(0, network_.GetNumNodes() - 1);
-                            } while (!network_.GetArch(node)->CanSchedule(*task));
+                            } while (framework_ptr_->GetArch(node)->GetType() == core::ArchType::DRAM);
                         }
                         AllocateTask(*task, time, node);
                     }
@@ -509,9 +506,8 @@ namespace planner
         } while (!CheckValidSolution());
         std::cerr << "Final Best Evaluation: " << best_evaluation << std::endl;
 
-
-        dataflow_scheduler_ = std::make_shared<DataflowScheduler>(compute_ticks_, prefix_transmission_time_, suffix_transmission_time_, network_, data_blocks_, best_allocations);
-        dataflow_scheduler_->EstimateDataflowOverhead(DataflowScheduler::OverheadEstimateType::Relaxed);
+        // dataflow_scheduler_ = std::make_shared<DataflowScheduler>(compute_ticks_, prefix_transmission_time_, suffix_transmission_time_, network_, data_blocks_, best_allocations);
+        // dataflow_scheduler_->EstimateDataflowOverhead(DataflowScheduler::OverheadEstimateType::Relaxed);
     }
 
     void TaskScheduler::SaveTaskAllocation() const
@@ -577,7 +573,7 @@ namespace planner
         for (const auto &[key, used_buffer_capacity] : used_buffer_capacity_)
         {
             auto [time, node] = key;
-            Size capacity = network_.GetArch(node)->GetBufferSizeBytes();
+            Size capacity = framework_ptr_->GetArch(node)->GetBufferSizeBytes();
             double utilization = double(used_buffer_capacity - shared_memory_byte_.at(key)) / capacity;
             if (utilization > 1)
                 return false;

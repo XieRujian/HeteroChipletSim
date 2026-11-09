@@ -11,10 +11,12 @@
 
 namespace planner
 {
+    class Phase;
     class DataflowScheduler
     {
         class ReachabilitySets;
 
+        const Phase *phase_ptr_;
         std::vector<Tick> compute_ticks_;
         TimeStamp prefix_transmission_time_;
         TimeStamp suffix_transmission_time_;
@@ -39,9 +41,9 @@ namespace planner
         };
 
     public:
-        DataflowScheduler(std::vector<Tick> compute_ticks, Tick prefix_transmission_time, Tick suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks);
-        DataflowScheduler(std::vector<Tick> compute_ticks, Tick prefix_transmission_time, Tick suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::vector<core::Task> &tasks)
-            : compute_ticks_(compute_ticks), prefix_transmission_time_(prefix_transmission_time), suffix_transmission_time_(suffix_transmission_time), network_(network), data_blocks_(data_blocks), tasks_(tasks) {}
+        DataflowScheduler(const Phase *phase_ptr, const std::vector<Tick> &compute_ticks, TimeStamp prefix_transmission_time, TimeStamp suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::map<TaskName, core::Task> &tasks);
+        DataflowScheduler(const Phase *phase_ptr, const std::vector<Tick> &compute_ticks, TimeStamp prefix_transmission_time, TimeStamp suffix_transmission_time, const core::Network &network, const std::map<DataBlockName, core::DataBlock> &data_blocks, const std::vector<core::Task> &tasks)
+            : phase_ptr_(phase_ptr), compute_ticks_(compute_ticks), prefix_transmission_time_(prefix_transmission_time), suffix_transmission_time_(suffix_transmission_time), network_(network), data_blocks_(data_blocks), tasks_(tasks) {}
 
         void SetIntermediateResultPath(const std::string &path) { intermediate_result_path_ = path; }
         void SetDataAnalysisPath(const std::string &path) { data_analysis_path_ = path; }

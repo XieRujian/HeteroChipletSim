@@ -39,19 +39,16 @@ namespace core
         std::vector<std::vector<ChainId>> out_chain_ids_by_node_;
         std::vector<std::vector<ChainId>> chain_ids_contain_edge_;
 
-        std::vector<Arch> node_archs_;
-        std::map<ArchName, NodeId> node_of_arch_;
+        std::vector<ArchName> node_archs_;
 
     public:
         Network() = default;
 
         void LoadTopology(std::string json_path);
-        void LoadArch(std::string ini_path);
-        void ShuffleArchs();
+        void SetArch(NodeId node, const ArchName &arch) { node_archs_.at(node) = arch; }
 
         const NodeName &GetNodeName(NodeId n) const { return node_names_.at(n); }
         NodeId GetNodeId(const NodeName &name) const { return node_name_to_id_.at(name); }
-        NodeId GetNodeIdByArch(const ArchName &arch_name) const { return node_of_arch_.at(arch_name); }
         NodeId GetNumNodes() const noexcept { return node_name_to_id_.size(); }
         EdgeId GetNumEdges() const noexcept { return edges_.size(); }
         ChainId GetNumChains() const noexcept { return chains_.size(); }
@@ -61,11 +58,8 @@ namespace core
         const std::vector<ChainId> &GetChainIdsContainEdge(EdgeId e) const noexcept { return chain_ids_contain_edge_[e]; }
         const std::vector<EdgeId> &GetEdgeIdsInChain(ChainId c) const noexcept { return chains_[c].edge_ids; }
         const std::vector<Chain> &GetChains() const noexcept { return chains_; }
-        const Arch &GetArch(NodeId node) const;
-        const std::vector<NodeId> GetNodes(ArchType type) const;
         const std::vector<Edge> GetEdgesSrcNode(NodeId node) const;
-        Arch &GetArch(NodeId node);
-
+        const ArchName &GetArch(NodeId node) const { return node_archs_.at(node); }
         double GetChainEnergyPerBit(ChainId c) const;
     };
 }

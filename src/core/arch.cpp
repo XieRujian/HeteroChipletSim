@@ -13,11 +13,6 @@ namespace core
     ArchImpl::ArchImpl(ArchType type, const std::map<std::string, std::string> &config_ini)
         : type_(type), buffer_capacity_kb_(std::stoull(config_ini.at("buffer_size"))) {}
 
-    void ArchImpl::AddPreStoreDataBlock(const DataBlockName &data_block_name)
-    {
-        pre_store_data_blocks_.insert(data_block_name);
-    }
-
     EvaluationResult Arch::Evaluate(const Task &task) const { return task->accept(*this); }
 
     Arch::Arch(const ArchName &name, const std::map<std::string, std::string> &config_ini)

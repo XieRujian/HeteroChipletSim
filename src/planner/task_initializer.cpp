@@ -154,7 +154,7 @@ namespace planner
     std::vector<TimeStamp> TaskInitializer::GetNonZeroTimeSlot() const
     {
         std::vector<TimeStamp> non_zero_time_slot;
-        for (TimeStamp t = 0; t < task_scheduler_ptr_->compute_ticks_.size(); ++t)
+        for (TimeStamp t = 0; t < TimeStamp(task_scheduler_ptr_->compute_ticks_.size()); ++t)
             if (task_scheduler_ptr_->compute_ticks_[t] > 0)
                 non_zero_time_slot.push_back(t + task_scheduler_ptr_->prefix_transmission_time_);
         return non_zero_time_slot;

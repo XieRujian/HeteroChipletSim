@@ -13,14 +13,14 @@ namespace core
             if (key == "shape")
                 for (cJSON *dim = item->child; dim; dim = dim->next)
                     shape_.push_back(dim->valueint);
-            else if (key == "source")
-                source_ = item->valuestring;
             else if (key == "tag")
             {
-                if (std::string(item->valuestring) == "Input")
-                    tag_ = DataTag::Input;
-                else if (std::string(item->valuestring) == "Output")
-                    tag_ = DataTag::Output;
+                if (std::string(item->valuestring) == "InAct")
+                    tag_ = DataTag::InAct;
+                else if (std::string(item->valuestring) == "Weight")
+                    tag_ = DataTag::Weight;
+                else if (std::string(item->valuestring) == "OutAct")
+                    tag_ = DataTag::OutAct;
             }
             else if (key == "dtype")
             {
@@ -33,8 +33,6 @@ namespace core
                 else
                     throw std::runtime_error("Unsupported data type: " + std::string(item->valuestring));
             }
-            else if (key == "destination")
-                destination_ = item->valuestring;
         }
     }
 

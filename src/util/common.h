@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 using Cycle = uint64_t;
 using Tick = uint64_t;
@@ -28,6 +29,8 @@ namespace util
 {
     std::string GetFileContent(const std::string &path);
     void MakeDirectory(const std::string &path);
+    // {aaa.xxx, bbb.xxx, ...}，找到最小的#使得 {aaa_{#}.xxx, bbb_{#}.xxx, ...} 都不存在，返回 {aaa_{#}.xxx, bbb_{#}.xxx, ...}
+    std::vector<std::string> GetNextAvailableFileNames(const std::vector<std::string> &paths);
 
     double pow(double x, int n);
     inline int log2(uint64_t x) { return 63 - __builtin_clzll(x); }

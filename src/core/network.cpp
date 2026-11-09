@@ -15,6 +15,7 @@ namespace core
         cJSON *nodes = nullptr;
         cJSON *edges = nullptr;
         cJSON *chain = nullptr;
+        cJSON *arch = nullptr;
         for (cJSON *item = json->child; item; item = item->next)
         {
             std::string key(item->string);
@@ -24,10 +25,13 @@ namespace core
                 edges = item;
             else if (key == "chain")
                 chain = item;
+            else if (key == "arch")
+                arch = item;
         }
         assert(nodes != nullptr);
         assert(edges != nullptr);
         assert(chain != nullptr);
+        assert(arch != nullptr);
         for (cJSON *item = nodes->child; item; item = item->next)
         {
             NodeId id = node_name_to_id_.size();
@@ -83,26 +87,13 @@ namespace core
             out_chain_ids_by_node_[chain.from_node].push_back(c);
             chains_.push_back(chain);
         }
-    }
 
-    void Network::LoadArch(std::string ini_path)
-    {
-        node_archs_ = std::vector<Arch>(GetNumNodes());
-        auto configs = util::ReadIniConfig(ini_path);
-        for (auto &[arch_name, arch_config] : configs)
+        node_archs_.assign(GetNumNodes(), ArchName());
+        for (cJSON *item = arch->child; item; item = item->next)
         {
-            NodeName node_name = arch_config["node"];
-            NodeId id = node_name_to_id_.at(node_name);
-            node_of_arch_[arch_name] = id;
-            node_archs_[id] = Arch(arch_name, arch_config);
+            NodeId node_id = node_name_to_id_.at(item->string);
+            node_archs_[node_id] = item->valuestring;
         }
-    }
-
-    void Network::ShuffleArchs()
-    {
-        util::shuffle(node_archs_);
-        for (NodeId id = 0; id < GetNumNodes(); ++id)
-            node_of_arch_[node_archs_[id].GetName()] = id;
     }
 
     double Network::GetChainEnergyPerBit(ChainId c) const
@@ -113,9 +104,6 @@ namespace core
         return energy_pj_per_bit;
     }
 
-    const Arch &Network::GetArch(NodeId node) const { return node_archs_.at(node); }
-    Arch &Network::GetArch(NodeId node) { return node_archs_.at(node); }
-
     const std::vector<Edge> Network::GetEdgesSrcNode(NodeId node) const
     {
         std::vector<Edge> edges;
@@ -123,14 +111,5 @@ namespace core
             if (edge.from_node == node)
                 edges.push_back(edge);
         return edges;
-    }
-
-    const std::vector<NodeId> Network::GetNodes(ArchType type) const
-    {
-        std::vector<NodeId> nodes;
-        for (const auto &arch : node_archs_)
-            if (arch->GetType() == type)
-                nodes.push_back(node_of_arch_.at(arch.GetName()));
-        return nodes;
     }
 }

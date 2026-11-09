@@ -24,7 +24,6 @@ namespace core
         EvaluationResult Evaluate(const Gemm &) const override;
         EvaluationResult Evaluate(const Conv &) const override;
         EvaluationResult Evaluate(const Attention &) const override;
-        bool CanSchedule(const Task &task) const override;
     };
 
 } // namespace core
